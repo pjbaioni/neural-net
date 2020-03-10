@@ -54,11 +54,9 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		for(size_t l=1; l<nlayers-1; ++l){
 			L[l] = A[l-1]*W[l-1] + b[l-1];
 			A[l] = tanh(L[l].array());
-		}
+		}	
 		//The final output shouldn't be activated, otherwise it will be necessarly a tanh:
 		L[nlayers-1] = A[nlayers-2]*W[nlayers-2] + b[nlayers-2];
-		A[nlayers-1] = L[nlayers-1];		//this variable will probably be unuseful, 
-		                                //storing L[nl] should be enough
 		
 		//Computing cost as the L2 distance: (divided by 2, for ease in later differentiation)
 		cost = .5 * (L[nlayers-1] - Data.col(1)).array().square().matrix().sum();
