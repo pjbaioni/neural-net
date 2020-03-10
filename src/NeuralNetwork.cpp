@@ -21,7 +21,7 @@ NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> & nn): nlayers{nn.si
 	A.resize(nlayers-1); // bcs A will be out of range
 	
 	B.resize(n_layers-1);	
-	dW=W; //1) this require that dW[l] and W[l] refer to the same l;
+	dW=W; //1) this require that dW[l] and W[l] refer to the same l, same for b
 	db=b; //2) first value isn't important here, since it would be overwritten anyway 
 }
 
@@ -52,11 +52,13 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		// Forward propagation //
 		/////////////////////////
 		for(size_t l=1; l<nlayers-1; ++l){
-			L[l] = A[l-1]*W[l-1] + b[l-1];
-			A[l] = tanh(L[l].array());
+			//Summing the column vector b (nnodes[l+1]x1) to each 
+			//column of A*W (ndataxnnodes[l]*nnodes[l]xnnodes[l+1]) :
+			L[l] = ( A[l-1]*W[l-1] ).rowwise() + b[l-1].transpose();
+			A[l] = tanh( L[l].array() );
 		}	
 		//The final output shouldn't be activated, otherwise it will be necessarly a tanh:
-		L[nlayers-1] = A[nlayers-2]*W[nlayers-2] + b[nlayers-2];
+		L[nlayers-1] = ( A[nlayers-2]*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
 		
 		//Computing cost as the L2 distance: (divided by 2, for ease in later differentiation)
 		cost = .5 * (L[nlayers-1] - Data.col(1)).array().square().matrix().sum();
@@ -72,21 +74,21 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		B[n_layers-2] = L[nlayers-1] - Data.col(1);	
 		for(size_t l=nlayers-2; l>0; --l){
 			//Compute gradient of cost wrt W:
-			dW[l]=L[l]*B[l];
+			dW[l] = ( L[l].tranpose() )*B[l];
 			//Update W:
-			W[l]=W[l]-alpha*dW[l];
+			W[l] = W[l] - alpha*dW[l];
 			//Compute gradient of cost wrt b:
-			db[l]=B[l].rowwise().sum();
+			db[l] = B[l].transpose().rowwise().sum();
 			//Update b:
-			b[l]=b[l]-alpha*db[l];
+			b[l] = b[l] - alpha*db[l];
 			//Compute previous B: (now there is tanh, and dx[tanh(x)]=1-x^2)
-			B[l-1]=(1. - A[l].array().square()) * ( (B[l]*W[l]).array() );
+			B[l-1] = (1. - A[l].array().square()) * ( (B[l]*( W[l].transpose() ).array() );
 		}
 		//Updating parameters of the first hidden layer:
-			dW[0]=L[0]*B[0];
-			W[0]=W[0]-alpha*dW[0];
-			db[0]=B[0].rowwise().sum();
-			b[0]=b[0]-alpha*db[0];
+			dW[0] = ( L[0].transpose() )*B[0];
+			W[0] = W[0] - alpha*dW[0];
+			db[0] = B[0].transpose().rowwise().sum();
+			b[0] = b[0] - alpha*db[0];
 		
 	}//End of the training loop
 	
