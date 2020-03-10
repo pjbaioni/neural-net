@@ -27,8 +27,20 @@ NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> & nn): nlayers{nn.si
 
 //Training function:
 void NeuralNetwork::train(const MatrixXd & Data, const double alpha, 
-                          const size_t niter, const double tolerance){
+                          const size_t niter, const double tolerance){                     
 	//Init:
+	size_t ndata=Data.nrows();
+	
+	//L has nlayers components
+	for(size_t l=0; l<nlayers;++l)
+		L.emplace_back(ndata,nnodes[l]);
+	//A hasn't the last one
+	for(size_t l=0; l<nlayers-1;++l)
+		A.emplace_back(ndata,nnodes[l]);
+	//B hasn't the first one
+	for(size_t l=1; l<nlayers;++l);
+		B.emplace_back(ndata,nnodes[l]);
+	
 	double cost{0.};
 	L[0]=Data.col(0); //First layer only reads the
 	A[0]=L[0];				//input, see doc
