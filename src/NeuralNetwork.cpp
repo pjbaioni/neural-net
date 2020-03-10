@@ -5,7 +5,25 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
 //Constructor:
-NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> &);
+NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> & nn): nlayers{nn.size()},nnodes{nn}{
+	//In same the order of the declaration,
+	//mind that, since ndata is unknown here,
+	//L[l],A[l],B[l] have to be defined later, before the training loop
+	
+	W.resize(nlayers-1);
+	b.resize(nlayers-1);
+	for(size_t l=0; l<nlayers-1; ++l){
+		W.push_back(MatrixXd::Random(nnodes[l],nnodes[l+1]));	//W MUST be random initialized, see doc
+		b.push_back(VectorXd(nnodes[l+1]));
+	}
+	
+	L.resize(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
+	A.resize(nlayers-1); // bcs A will be out of range
+	
+	B.resize(n_layers-1);	
+	dW=W; //1) this require that dW[l] and W[l] refer to the same l;
+	db=b; //2) first value isn't important here, since it would be overwritten anyway 
+}
 
 //Training function:
 void NeuralNetwork::train(const MatrixXd & Data, const double alpha, 
