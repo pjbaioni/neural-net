@@ -68,30 +68,26 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		// Backward propagation //
 		//////////////////////////
 		
-		//Compute B backward as d(cost)/d(output), no tanh because it's the last layer
-		B[0] = L[nlayers-1] - Data.col(1);	
-		for(size_t l=0; l<nlayers-2; ++l){
+		//Compute B as d(cost)/d(output): (no tanh now because it's the last layer)
+		B[n_layers-2] = L[nlayers-1] - Data.col(1);	
+		for(size_t l=nlayers-2; l>0; --l){
 			//Compute gradient of cost wrt W:
-			dW[l]=L[nlayers-1]*B[l];
+			dW[l]=L[l]*B[l];
 			//Update W:
 			W[l]=W[l]-alpha*dW[l];
 			//Compute gradient of cost wrt b:
 			db[l]=B[l].rowwise().sum();
 			//Update b:
 			b[l]=b[l]-alpha*db[l];
-			//Compute next B: (now there is tanh, and dx[tanh(x)]=1-x^2)
-			B[l+1]=(1. - A[l].array().square()) * ( (B[l]*W[nlayers-1-l]).array() );
+			//Compute previous B: (now there is tanh, and dx[tanh(x)]=1-x^2)
+			B[l-1]=(1. - A[l].array().square()) * ( (B[l]*W[l]).array() );
 		}
+		//Updating parameters of the first hidden layer:
+			dW[0]=L[0]*B[0];
+			W[0]=W[0]-alpha*dW[0];
+			db[0]=B[0].rowwise().sum();
+			b[0]=b[0]-alpha*db[0];
 		
-		{ //Updating parameters of the first hidden layer:
-			size_t l = nlayers-2;
-			dW[l]=L[nlayers-1]*B[l];
-			W[l]=W[l]-alpha*dW[l];
-			db[l]=B[l].rowwise().sum();
-			b[l]=b[l]-alpha*db[l];
-		}
-		
-	
 	}//End of the training loop
 	
 }
