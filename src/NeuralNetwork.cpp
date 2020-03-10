@@ -94,3 +94,23 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 	
 }
 
+//Test function:
+pair<VectorXd,double> test(const Eigen::MatrixXd & Data){
+	
+	//One forprop as before during training,
+	//w/o storing anything but the final result:
+	MatrixXd L{Data.col(0)};
+	MatrixXd A{L};
+	
+	for(size_t l=1; l<n_layers-1; ++l){
+		L = ( A*W[l-1] ).rowwise() + b[l-1].transpose();
+		A = tanh( L.array() );	
+	}
+	L = ( A*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
+	
+	//Computation of the L2 relative error:
+	double numerator = ( Data.col(1)-L ).norm();
+	double denominator = ( Data.col(1).norm() + L.norm() )/2.;
+	
+	return make_tuple(L, (numerator/denominator) );
+}
