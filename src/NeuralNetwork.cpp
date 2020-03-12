@@ -10,8 +10,8 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 	//mind that, since ndata is unknown here,
 	//L[l],A[l],B[l] have to be defined later, before the training loop
 	
-	W.resize(nlayers-1);
-	b.resize(nlayers-1);
+	W.reserve(nlayers-1);
+	b.reserve(nlayers-1);
 	for(size_t l=0; l<nlayers-1; ++l){
 		W.push_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	//W MUST be random initialized, see doc
 		b.push_back(VectorXd(nnodes(l+1)));
