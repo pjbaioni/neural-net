@@ -5,6 +5,7 @@
 #include <vector>
 #include <Eigen>
 #include <utility>
+#include <limits>
 
 class NeuralNetwork{
 private:
