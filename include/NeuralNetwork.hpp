@@ -8,12 +8,14 @@
 #include <limits>
 #include <iostream>
 
+typedef Eigen::Matrix< std::size_t, Eigen::Dynamic, 1 > 	VectorXs;
+
 class NeuralNetwork{
 private:
 
 	//Hyperparameters:
 	std::size_t nlayers;							//total number of layers of the net (hidden+2)
-	std::vector<std::size_t> nnodes;	//nnodes[l]=number of nodes of the l-th layer
+	VectorXs nnodes;	//nnodes[l]=number of nodes of the l-th layer
 	
 	//Parameters to be optimized:
 	std::vector<Eigen::MatrixXd> W;		//Weights, every node has his own weight for every node of the previous layer
@@ -31,7 +33,7 @@ private:
 public:
 	
 	//Constructor:
-	NeuralNetwork(const std::vector<std::size_t> &);
+	NeuralNetwork(const VectorXs &);
 	
 	//Training function:
 	void train(const Eigen::MatrixXd & Data, const double alpha, const std::size_t niter, const double tolerance);

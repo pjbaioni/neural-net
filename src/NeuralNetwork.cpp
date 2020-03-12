@@ -5,7 +5,7 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
 //Constructor:
-NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> & nn): nlayers{nn.size()},nnodes{nn}{
+NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 	//In same the order of the declaration,
 	//mind that, since ndata is unknown here,
 	//L[l],A[l],B[l] have to be defined later, before the training loop
@@ -13,8 +13,8 @@ NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> & nn): nlayers{nn.si
 	W.resize(nlayers-1);
 	b.resize(nlayers-1);
 	for(size_t l=0; l<nlayers-1; ++l){
-		W.push_back(MatrixXd::Random(nnodes[l],nnodes[l+1]));	//W MUST be random initialized, see doc
-		b.push_back(VectorXd(nnodes[l+1]));
+		W.push_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	//W MUST be random initialized, see doc
+		b.push_back(VectorXd(nnodes(l+1)));
 	}
 	
 	L.resize(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
@@ -38,13 +38,13 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 	
 	//L has nlayers components
 	for(size_t l=0; l<nlayers;++l)
-		L.emplace_back(ndata,nnodes[l]);
+		L.emplace_back(ndata,nnodes(l));
 	//A hasn't the last one
 	for(size_t l=0; l<nlayers-1;++l)
-		A.emplace_back(ndata,nnodes[l]);
+		A.emplace_back(ndata,nnodes(l));
 	//B hasn't the first one
 	for(size_t l=1; l<nlayers;++l)
-		B.emplace_back(ndata,nnodes[l]);
+		B.emplace_back(ndata,nnodes(l));
 	
 	//First layer only reads the input, see doc
 	L[0]=Data.col(0); 
@@ -58,8 +58,8 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		// Forward propagation //
 		/////////////////////////
 		for(size_t l=1; l<nlayers-1; ++l){
-			//Summing the column vector b (nnodes[l+1]x1) to each 
-			//column of A*W (ndataxnnodes[l]*nnodes[l]xnnodes[l+1]) :
+			//Summing the column vector b (nnodes(l+1)x1) to each 
+			//column of A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)) :
 			L[l] = ( A[l-1]*W[l-1] ).rowwise() + b[l-1].transpose();
 			A[l] = tanh( L[l].array() );
 		}	
