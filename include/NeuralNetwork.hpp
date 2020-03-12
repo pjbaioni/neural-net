@@ -3,9 +3,10 @@
 
 #include <cstdlib>
 #include <vector>
-#include <Eigen>
+#include <Eigen/Dense>
 #include <utility>
 #include <limits>
+#include <iostream>
 
 class NeuralNetwork{
 private:

@@ -20,7 +20,7 @@ NeuralNetwork::NeuralNetwork(const std::vector<std::size_t> & nn): nlayers{nn.si
 	L.resize(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
 	A.resize(nlayers-1); // bcs A will be out of range
 	
-	B.resize(n_layers-1);	
+	B.resize(nlayers-1);	
 	dW=W; //1) this require that dW[l] and W[l] refer to the same l, same for b
 	db=b; //2) first value isn't important here, since it would be overwritten anyway 
 }
@@ -32,7 +32,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 	//      Init     //
 	///////////////////
 	
-	size_t ndata=Data.nrows();
+	size_t ndata=Data.rows();
 	double old_cost{numeric_limits<double>::infinity()};
 	double cost{-1.}, err{old_cost};
 	
@@ -43,7 +43,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 	for(size_t l=0; l<nlayers-1;++l)
 		A.emplace_back(ndata,nnodes[l]);
 	//B hasn't the first one
-	for(size_t l=1; l<nlayers;++l);
+	for(size_t l=1; l<nlayers;++l)
 		B.emplace_back(ndata,nnodes[l]);
 	
 	//First layer only reads the input, see doc
@@ -74,7 +74,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		if(t%25==0){
 			cout<<"t="<<t<<" cost="<<cost<<"\n";
 			err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
-			if(err<tol)
+			if(err<tolerance)
 				return;
 			else
 				old_cost = cost;
@@ -85,10 +85,10 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		//////////////////////////
 		
 		//Compute B as d(cost)/d(output): (no tanh now because it's the last layer)
-		B[n_layers-2] = L[nlayers-1] - Data.col(1);	
+		B[nlayers-2] = L[nlayers-1] - Data.col(1);	
 		for(size_t l=nlayers-2; l>0; --l){
 			//Compute gradient of cost wrt W:
-			dW[l] = ( L[l].tranpose() )*B[l];
+			dW[l] = ( L[l].transpose() )*B[l];
 			//Update W:
 			W[l] = W[l] - alpha*dW[l];
 			//Compute gradient of cost wrt b:
@@ -96,7 +96,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 			//Update b:
 			b[l] = b[l] - alpha*db[l];
 			//Compute previous B: (now there is tanh, and dx[tanh(x)]=1-x^2)
-			B[l-1] = (1. - A[l].array().square()) * ( (B[l]*( W[l].transpose() ).array() );
+			B[l-1] = (1. - (A[l].array().square())) * ( (B[l]* (W[l].transpose()) ).array() );
 		}
 		//Updating parameters of the first hidden layer:
 			dW[0] = ( L[0].transpose() )*B[0];
@@ -109,14 +109,14 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 }
 
 //Test function:
-pair<VectorXd,double> test(const Eigen::MatrixXd & Data){
+pair<VectorXd,double> NeuralNetwork::test(const Eigen::MatrixXd & Data){
 	
 	//One forprop as before during training,
 	//w/o storing anything but the final result:
 	MatrixXd L{Data.col(0)};
 	MatrixXd A{L};
 	
-	for(size_t l=1; l<n_layers-1; ++l){
+	for(size_t l=1; l<nlayers-1; ++l){
 		L = ( A*W[l-1] ).rowwise() + b[l-1].transpose();
 		A = tanh( L.array() );	
 	}
@@ -126,5 +126,6 @@ pair<VectorXd,double> test(const Eigen::MatrixXd & Data){
 	double numerator = ( Data.col(1)-L ).norm();
 	double denominator = ( Data.col(1).norm() + L.norm() )/2.;
 	
-	return make_tuple(L, (numerator/denominator) );
+	
+	return make_pair(L, (numerator/denominator) );
 }
