@@ -113,19 +113,19 @@ pair<VectorXd,double> NeuralNetwork::test(const Eigen::MatrixXd & Data){
 	
 	//One forprop as before during training,
 	//w/o storing anything but the final result:
-	MatrixXd L{Data.col(0)};
-	MatrixXd A{L};
+	MatrixXd Ltest{Data.col(0)};
+	MatrixXd Atest{Ltest};
 	
 	for(size_t l=1; l<nlayers-1; ++l){
-		L = ( A*W[l-1] ).rowwise() + b[l-1].transpose();
-		A = tanh( L.array() );	
+		Ltest = ( Atest*W[l-1] ).rowwise() + b[l-1].transpose();
+		Atest = tanh( Ltest.array() );	
 	}
-	L = ( A*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
+	Ltest = ( Atest*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
 	
 	//Computation of the L2 relative error:
-	double numerator = ( Data.col(1)-L ).norm();
-	double denominator = ( Data.col(1).norm() + L.norm() )/2.;
+	double numerator = ( Data.col(1)-Ltest ).norm();
+	double denominator = ( Data.col(1).norm() + Ltest.norm() )/2.;
 	
 	
-	return make_pair(L, (numerator/denominator) );
+	return make_pair(Ltest, (numerator/denominator) );
 }
