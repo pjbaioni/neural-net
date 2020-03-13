@@ -43,28 +43,29 @@ int main(int argc, char** argv){
 	
 	//Get data:
 	size_t ntraindata{70},nlayers{9},ntestdata{30};
-	double alpha{1e-3},tol{1e-3};
-	size_t niter{25000};
+	double alpha{1e-3},tol{1e-4};
+	size_t niter{500000};
 	string train_filename,architecture_filename, test_filename;
 	//use GetPot here...
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
-	read_set("./../data/Train.csv",TrainData,',');
+	read_set("./../data/LinspacedTrainingSet.dat",TrainData);
 
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
 	//read_set("architecture.dat",architecture);
-	architecture(0)=1;
-	architecture(1)=3;
-	architecture(2)=5;
-	architecture(3)=7;
-	architecture(4)=9;
-	architecture(5)=7;
-	architecture(6)=5;
-	architecture(7)=3;
-	architecture(8)=1;
-	
+	architecture<<1,
+								3,
+								5,
+								7,
+								9,
+								7,
+								5,
+								3,
+								1;
+	//cout<<architecture<<endl;	
+	cout<<endl;
 	//Construct the net:
 	NeuralNetwork nn(architecture);
 	
@@ -73,16 +74,16 @@ int main(int argc, char** argv){
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
-	read_set("./../data/Test.csv",TestData,',');
+	read_set("./../data/LinspacedTestSet.dat",TestData);
 	
 	//Test the net:
-	VectorXd Yhat;
+	VectorXd yhat;
 	double errL2;
-	tie(Yhat,errL2)=nn.test(TestData);
+	tie(yhat,errL2)=nn.test(TestData);
 	
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
-	write_vector("./../data/Yhat.dat",Yhat)<<endl;
+	write_vector("./../data/yhat.dat",yhat)<<endl;
 	
 	return 0;
 } 
