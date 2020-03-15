@@ -25,7 +25,7 @@ public:
 	GradientDescent()=default;
 	GradientDescent(const size_t & m, const size_t & n):GradientDescent(){}
 	virtual ~GradientDescent()=default;
-	virtual void operator()(T& theta, const T& gt, const double& alpha, const double & t){
+	virtual void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t){
 		update_objective(theta,gt,alpha);
 	}
 };
@@ -43,7 +43,7 @@ public:
 	virtual void compute_momentum(const T & to_be_averaged){
 		mt = beta*mt + (1. - beta)*to_be_averaged;
 	}
-	void operator()(T& theta, const T& gt, const double& alpha, const double & t) override {
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
 		compute_momentum(gt);
 		this->update_objective(theta,mt,alpha);
 	}
@@ -60,7 +60,7 @@ public:
 	double get_eps(){return epsilon;}
 	const T& get_st(){return this->mt;}
 	
-	void operator()(T& theta, const T& gt, const double& alpha, const double & t) override {
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
 		this->compute_momentum(gt.cwiseProduct(gt));
 		this->update_objective(theta, ( gt.cwiseProduct( (1./(epsilon + sqrt(this->mt.array()))).matrix() )), alpha);
 	}
@@ -74,7 +74,7 @@ public:
 	KingmaBa(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
 	virtual void set_beta2(double b2){ beta2=b2;}
 
-	//void operator()(T& theta, const T& gt, const double & alpha, const double & t)override = 0;
+	void operator()(T& theta, const T& gt, const double & alpha, const std::size_t & t)override = 0;
 };
 
 template<typename T>
@@ -88,7 +88,7 @@ public:
 	Adam(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), rms(m,n){}
 	
 		//This follows the Kingma-Ba 2015 article +  memory saving
-	void operator()(T& theta, const T& gt, const double& alpha, const double & t)override{
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
 		//compute the momenta:
 		this->compute_momentum(gt);	//GDwithMomentum step
 		rms.set_beta(this->beta2);
@@ -126,7 +126,7 @@ public:
 	void set_epsilon(double e){epsilon=e;}
 	
 	//Memory already saved here, since AdaMax doesn't require an Adam-like correction step:
-	void operator()(T& theta, const T& gt, const double& alpha, const double & t)override{
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
 		//compute the momenta
 		this->compute_momentum(gt);										//GDwithMomentum step
 		ut = cwiseMax(this->beta2*ut,gt.cwiseAbs());	//AdaMax step
