@@ -30,6 +30,10 @@ private:
 	std::vector<Eigen::MatrixXd> dW;	//dW[l]=d(cost)/d(W[l])=d(cost)/d(output[l]) * d(output[l])/d(W[l]) = B[l] * ...
 	std::vector<Eigen::VectorXd> db;	//db[l]=d(cost)/d(b[l])=...=B*d(output[l])/(db[l])
 	
+	//Optimizers:
+	std::vector<Optimizers::GradientDescent<Eigen::MatrixXd> W_opt;
+	std::vector<Optimizers::GradientDescent<Eigen::VectorXd> b_opt;
+	
 public:
 	
 	//Constructor:
