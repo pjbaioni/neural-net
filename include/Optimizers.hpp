@@ -20,7 +20,8 @@ and for polymorfism and runtime choices
 template<typename T>
 class GradientDescent{
 public:
-	GradientDescent(const size_t & m, const size_t & n){}
+	GradientDescent()=default;
+	GradientDescent(const size_t & m, const size_t & n):GradientDescent(){}
 	void operator()(T& theta, const T& gt, const double& alpha, const double & t){
 		theta=theta-alpha*gt;
 	}
@@ -36,7 +37,7 @@ public:
 	void set_beta(double b){beta=b;}
 	
 	void operator()(T& theta, const T& gt, const double& alpha, const double & t){
-		mt=beta1*mt + (1.0-beta1)*gt;
+		mt=beta*mt + (1.0-beta)*gt;
 		theta=theta-alpha*mt;
 	}
 };
@@ -45,14 +46,16 @@ template<typename T>
 class RMSprop{
 private:
 	T st;
-	double beta2{0.9};
+	
+	double beta{0.9};
+	double epsilon{1e-8};
 public:
 	RMSprop(const size_t & m, const size_t & n):st(m,n){}
-	void set_beta(double b){beta=b;}
+	void set_param(double b, double e){beta=b; epsilon=e;}
 	
 	void operator()(T& theta, const T& gt, const double& alpha, const double & t){
 		st=beta*st + (1. - beta)*(gt.cwiseProduct(gt));
-		theta=theta - alpha * ( gt.cwiseProduct( 1./(1e-8+sqrt(st.array())) ));
+		theta=theta - alpha * ( gt.cwiseProduct( (1./(epsilon + sqrt(st.array()))).matrix() ));
 	}
 };
 
@@ -62,9 +65,9 @@ private:
 	T mt;
 	T vt;
 	
-	double beta1=0.9;
-	double beta2=0.999;
-	double epsilon=1e-8;
+	double beta1{0.9};
+	double beta2{0.999};
+	double epsilon{1e-8};
 public:
 	Adam(const size_t & m, const size_t & n): mt(m,n), vt(m,n){}
 	void set_param(double b1, double b2, double e){
@@ -91,9 +94,9 @@ private:
 	T mt;
 	T ut;
 	
-	double beta1=0.9;
-	double beta2=0.999;
-	double epsilon=1e-8;
+	double beta1{0.9};
+	double beta2{0.999};
+	double epsilon{1e-8};
 	
 	T cwiseMax(const T& a, const T& b){
 		//both T must have same dimensions,
@@ -118,7 +121,7 @@ public:
 		mt = beta1*mt + (1.0-beta1)*gt; //GDwithMomentum step
 		ut = cwiseMax(beta2*ut,gt.cwiseAbs()); //AdaMax step
 		//update:
-    theta=theta - ( alpha / (1.0-pow(beta1,t)) ) * ( mt.cwiseProduct( (1./ut.array()).matrix() ) );
+    theta=theta - ( alpha / (1.0-pow(beta1,t)) ) * ( mt.cwiseProduct( ( 1./(epsilon + ut.array()) ).matrix() ) );
 	}
 };
 

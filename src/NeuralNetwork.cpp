@@ -62,7 +62,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 	
 	//Beginning of the training loop:
 	for(size_t t=1; t<=niter; ++t){
-		
+		//char temp;
 		/////////////////////////
 		// Forward propagation //
 		/////////////////////////
@@ -71,6 +71,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 			//column of A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)) :
 			L[l] = ( A[l-1]*W[l-1] ).rowwise() + b[l-1].transpose();
 			A[l] = tanh( L[l].array() );
+			//if(t>=2) {cout<<A[l]<<"\n\n"<<L[l]<<"\n\n"<<t<<endl; cin>>temp;}
 		}	
 		//The final output shouldn't be activated, otherwise it will be necessarly a tanh:
 		L[nlayers-1] = ( A[nlayers-2]*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
@@ -100,12 +101,12 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 			dW[l] = ( L[l].transpose() )*B[l];
 			//Update W:
 			//W[l] = W[l] - alpha*dW[l];
-			W_opt(W[l],dW[l],alpha,t);
+			W_opt[l](W[l],dW[l],alpha,t);
 			//Compute gradient of cost wrt b:
 			db[l] = B[l].transpose().rowwise().sum();
 			//Update b:
 			//b[l] = b[l] - alpha*db[l];
-			b_opt(b[l],db[l],alpha,t);
+			b_opt[l](b[l],db[l],alpha,t);
 			//Compute previous B: (now there is tanh, and dx[tanh(x)]=1-x^2)
 			B[l-1] = (1. - (A[l].array().square())) * ( (B[l]* (W[l].transpose()) ).array() );
 		}

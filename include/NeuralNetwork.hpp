@@ -8,6 +8,8 @@
 #include <limits>
 #include <iostream>
 
+#include "Optimizers.hpp"
+
 typedef Eigen::Matrix< std::size_t, Eigen::Dynamic, 1 > 	VectorXs;
 
 class NeuralNetwork{
@@ -15,7 +17,7 @@ private:
 
 	//Hyperparameters:
 	std::size_t nlayers;							//total number of layers of the net (hidden+2)
-	VectorXs nnodes;	//nnodes[l]=number of nodes of the l-th layer
+	VectorXs nnodes;									//nnodes[l]=number of nodes of the l-th layer
 	
 	//Parameters to be optimized:
 	std::vector<Eigen::MatrixXd> W;		//Weights, every node has his own weight for every node of the previous layer
@@ -31,8 +33,8 @@ private:
 	std::vector<Eigen::VectorXd> db;	//db[l]=d(cost)/d(b[l])=...=B*d(output[l])/(db[l])
 	
 	//Optimizers:
-	std::vector<Optimizers::GradientDescent<Eigen::MatrixXd> W_opt;
-	std::vector<Optimizers::GradientDescent<Eigen::VectorXd> b_opt;
+	std::vector<Optimizers::AdaMax<Eigen::MatrixXd>> W_opt;
+	std::vector<Optimizers::AdaMax<Eigen::VectorXd>> b_opt;
 	
 public:
 	
