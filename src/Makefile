@@ -2,7 +2,7 @@ CXXFLAGS += -std=c++14 -O3 -ffast-math
 CPPFLAGS += -I/u/sw/pkgs/toolchains/gcc-glibc/7/pkgs/eigen/3.3.3/include/eigen3 -I./../include/
 OUTPUT_OPTIONS=-o $@
 EXE = main.out
-HEADERS=$(wildcard *.hpp)
+HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:%.cpp=%.o)
 
