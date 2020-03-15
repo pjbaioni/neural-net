@@ -20,7 +20,8 @@ and for polymorfism and runtime choices
 template<typename T>
 class GradientDescent{
 public:
-	void operator()(T& theta, const T& gt, const double& alpha){
+	GradientDescent(const size_t & m, const size_t & n){}
+	void operator()(T& theta, const T& gt, const double& alpha, const double & t){
 		theta=theta-alpha*gt;
 	}
 };
@@ -31,7 +32,7 @@ private:
 	T mt;
 	double beta{0.9};
 public:
-	Momentum(const size_t & m, const size_t &n):mt(m,n){}
+	GDwithMomentum(const size_t & m, const size_t &n):mt(m,n){}
 	void set_beta(double b){beta=b;}
 	
 	void operator()(T& theta, const T& gt, const double& alpha, const double & t){
