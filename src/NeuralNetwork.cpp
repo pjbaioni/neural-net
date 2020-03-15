@@ -23,6 +23,15 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 	B.resize(nlayers-1);	
 	dW=W; //1) this require that dW[l] and W[l] refer to the same l, same for b
 	db=b; //2) first value isn't important here, since it would be overwritten anyway 
+	
+	W_opt.reserve(nlayers-1);
+	b_opt.reserve(nlayers-1);
+	//the following is meaningful only if it exist
+	//a constructor taking two unsigned
+	for(size_t l=0; l<nlayers-1; ++l){
+		W_opt.emplace_back(dW[l].rows(),dW[l].cols());
+		b_opt.emplace_back(db[l].rows(),db[l].cols());
+	}
 }
 
 //Training function:
@@ -90,11 +99,13 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 			//Compute gradient of cost wrt W:
 			dW[l] = ( L[l].transpose() )*B[l];
 			//Update W:
-			W[l] = W[l] - alpha*dW[l];
+			//W[l] = W[l] - alpha*dW[l];
+			W_opt(W[l],dW[l],alpha,t);
 			//Compute gradient of cost wrt b:
 			db[l] = B[l].transpose().rowwise().sum();
 			//Update b:
-			b[l] = b[l] - alpha*db[l];
+			//b[l] = b[l] - alpha*db[l];
+			b_opt(b[l],db[l],alpha,t);
 			//Compute previous B: (now there is tanh, and dx[tanh(x)]=1-x^2)
 			B[l-1] = (1. - (A[l].array().square())) * ( (B[l]* (W[l].transpose()) ).array() );
 		}
