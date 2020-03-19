@@ -33,8 +33,8 @@ private:
 	std::vector<Eigen::VectorXd> db;	//db[l]=d(cost)/d(b[l])=...=B*d(output[l])/(db[l])
 	
 	//Optimizers:
-	std::vector<Optimizers::AdaMax<Eigen::MatrixXd>> W_opt;
-	std::vector<Optimizers::AdaMax<Eigen::VectorXd>> b_opt;
+	std::vector<Optimizers::Adam<Eigen::MatrixXd>> W_opt;
+	std::vector<Optimizers::Adam<Eigen::VectorXd>> b_opt;
 	
 public:
 	
