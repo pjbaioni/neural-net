@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 	NeuralNetwork nn(architecture);
 	
 	//Train the net:
-	nn.train(TrainData,alpha,niter,tol);
+	nn.train(TrainData,alpha,niter,tol,4,3);
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
