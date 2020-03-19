@@ -24,19 +24,19 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 	dW=W; //1) this require that dW[l] and W[l] refer to the same l, same for b
 	db=b; //2) first value isn't important here, since it would be overwritten anyway 
 	
-	W_opt.reserve(nlayers-1);
-	b_opt.reserve(nlayers-1);
+	W_optimizer.reserve(nlayers-1);
+	b_optimizer.reserve(nlayers-1);
 	//the following is meaningful only if it exist
 	//a constructor taking two unsigned
-	for(size_t l=0; l<nlayers-1; ++l){
-		W_opt.emplace_back(dW[l].rows(),dW[l].cols());
-		b_opt.emplace_back(db[l].rows(),db[l].cols());
-	}
+	/*for(size_t l=0; l<nlayers-1; ++l){
+		W_optimizer.emplace_back(dW[l].rows(),dW[l].cols());
+		b_optimizer.emplace_back(db[l].rows(),db[l].cols());
+	}*/
 }
 
 //Training function:
-void NeuralNetwork::train(const MatrixXd & Data, const double alpha, 
-                          const size_t niter, const double tolerance){                     
+void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_t niter, 
+                          const double tolerance, const size_t W_opt, const size_t b_opt){                     
 	///////////////////
 	//      Init     //
 	///////////////////
@@ -57,8 +57,65 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 	
 	//First layer only reads the input, see doc
 	L[0]=Data.col(0); 
-	A[0]=L[0];				
+	A[0]=L[0];	
 	
+	//Optimizers:
+	string W_opt_name, b_opt_name;
+	switch(W_opt){
+			case 0:
+				for(size_t l=0; l<nlayers-1; ++l){
+					W_optimizer.emplace_back(make_shared<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+					W_opt_name{"Gradient descent"};
+				}
+			case 1:
+				for(size_t l=0; l<nlayers-1; ++l){
+					W_optimizer.emplace_back(make_shared<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+					W_opt_name{"GD with momentum"};
+				}
+			case 2:
+				for(size_t l=0; l<nlayers-1; ++l){
+					W_optimizer.emplace_back(make_shared<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+					W_opt_name{"RMS prop"};
+				}
+			case 3:
+				for(size_t l=0; l<nlayers-1; ++l){
+					W_optimizer.emplace_back(make_shared<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+					W_opt_name{"Adam"};
+				}
+			case 4:
+				for(size_t l=0; l<nlayers-1; ++l){
+					W_optimizer.emplace_back(make_shared<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+					W_opt_name{"AdaMax"};
+				}
+		}		
+	
+	switch(b_opt){
+			case 0:
+				for(size_t l=0; l<nlayers-1; ++l){
+					b_optimizer.emplace_back(make_shared<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
+					b_opt_name{"Gradient descent"};
+				}
+			case 1:
+				for(size_t l=0; l<nlayers-1; ++l){
+					b_optimizer.emplace_back(make_shared<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
+					b_opt_name{"GD with momentum"};
+				}
+			case 2:
+				for(size_t l=0; l<nlayers-1; ++l){
+					b_optimizer.emplace_back(make_shared<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
+					b_opt_name{"RMS prop"};
+				}
+			case 3:
+				for(size_t l=0; l<nlayers-1; ++l){
+					b_optimizer.emplace_back(make_shared<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
+					b_opt_name{"Adam"};
+				}
+			case 4:
+				for(size_t l=0; l<nlayers-1; ++l){
+					b_optimizer.emplace_back(make_shared<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
+					b_opt_name{"AdaMax"};
+				}
+		}	
 	
 	//Beginning of the training loop:
 	for(size_t t=1; t<=niter; ++t){
@@ -82,7 +139,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 		//Output the current cost (a --verbose option could be useful)
 		//and check if convergence is reached:
 		if(t%25==0){
-			cout<<"t="<<t<<" cost="<<cost<<"\n";
+			cout<<"t="<<t<<" cost="<<cost<<" W opt="<<W_opt_name<<" b opt="<<b_opt_name<<"\n";
 			err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
 			if(err<tolerance)
 				return;
@@ -101,12 +158,12 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha,
 			dW[l] = ( L[l].transpose() )*B[l];
 			//Update W:
 			//W[l] = W[l] - alpha*dW[l];
-			W_opt[l](W[l],dW[l],alpha,t);
+			(*W_optimizer[l])(W[l],dW[l],alpha,t);
 			//Compute gradient of cost wrt b:
 			db[l] = B[l].transpose().rowwise().sum();
 			//Update b:
 			//b[l] = b[l] - alpha*db[l];
-			b_opt[l](b[l],db[l],alpha,t);
+			(*b_optimizer[l])(b[l],db[l],alpha,t);
 			//Compute previous B: (now there is tanh, and dx[tanh(x)]=1-x^2)
 			B[l-1] = (1. - (A[l].array().square())) * ( (B[l]* (W[l].transpose()) ).array() );
 		}
