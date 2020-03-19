@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 	
 	//Get data:
 	size_t ntraindata{70},nlayers{9},ntestdata{30};
-	double alpha{1e-3},tol{1e-4};
+	double alpha{1e-2},tol{1e-4};
 	size_t niter{500000};
 	string train_filename,architecture_filename, test_filename;
 	//use GetPot here...
@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 	NeuralNetwork nn(architecture);
 	
 	//Train the net:
-	nn.train(TrainData,alpha,niter,tol,4,3);
+	nn.train(TrainData,alpha,niter,tol,4,3,3);
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);

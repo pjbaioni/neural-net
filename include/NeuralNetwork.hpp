@@ -8,6 +8,7 @@
 #include <limits>
 #include <iostream>
 #include <memory>
+#include <numeric>
 
 #include "Optimizers.hpp"
 
@@ -42,13 +43,8 @@ public:
 	//Constructor:
 	NeuralNetwork(const VectorXs &);
 	
-	//Training functions:
-	
-	//Base:
-	void train(const Eigen::MatrixXd & Data, const double alpha, const std::size_t niter, const double tolerance, const size_t W_opt, const size_t b_opt);
-	//With piecewise constant learning rate decay:
-		void train(const Eigen::MatrixXd & Data, const double alpha, const std::size_t niter, const double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements);
-	
+	//Training function:
+	void train(const Eigen::MatrixXd & Data, double alpha, std::size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements=1);
 	
 	//Test function:
 	std::pair<Eigen::VectorXd,double> test(const Eigen::MatrixXd & Data);

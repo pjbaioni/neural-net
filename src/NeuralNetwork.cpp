@@ -36,8 +36,8 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 }
 
 //Training function:
-void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_t niter, 
-                          const double tolerance, const size_t W_opt, const size_t b_opt){                     
+void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance
+                          , const size_t W_opt, const size_t b_opt, const size_t nrefinements){                     
 	///////////////////
 	//      Init     //
 	///////////////////
@@ -61,6 +61,9 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 	A[0]=L[0];	
 	
 	//Optimizers:
+	//Preliminar tests has shown that the best compromise between accuracy
+	//and number of iteration is reached when using AdaMax for W and Adam for b,
+	//so these are the default
 	string W_opt_name, b_opt_name;
 	switch(W_opt){
 		case 0:
@@ -78,7 +81,6 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 				W_optimizer.emplace_back(make_shared<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
 			W_opt_name = "RMSprop";
 			break;
-		//case 3:
 		case 3:
 			for(size_t l=0; l<nlayers-1; ++l)
 				W_optimizer.emplace_back(make_shared<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
@@ -107,7 +109,6 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 				b_optimizer.emplace_back(make_shared<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
 			b_opt_name = "RMSprop";
 			break;
-		//case 3:
 		default:
 			for(size_t l=0; l<nlayers-1; ++l)
 				b_optimizer.emplace_back(make_shared<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
@@ -120,7 +121,10 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 			break;
 	}	
 	
-	//Beginning of the training loop:
+	//Beginning of the training loops:
+niter=niter/nrefinements;
+vector<size_t> backup_t(nrefinements);
+for(size_t ref=1; ref<=nrefinements; ++ref){
 	for(size_t t=1; t<=niter; ++t){
 		//char temp;
 		/////////////////////////
@@ -142,10 +146,12 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 		//Output the current cost (a --verbose option could be useful)
 		//and check if convergence is reached:
 		if(t%25==0){
-			cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<"\n";
+			cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
 			err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
-			if(err<tolerance)
-				return;
+			if(err<tolerance){
+				backup_t.push_back(t);
+				break;
+			}
 			else
 				old_cost = cost;
 		}
@@ -177,8 +183,14 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 			b[0] = b[0] - alpha*db[0];
 	
 	}//End of the training loop
-	
-}
+alpha=alpha/10;
+tolerance=tolerance/((10-2*ref)*10);
+}//End of the refinements loop
+backup_t[nrefinements-1]==0 ? 
+	cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)+niter<<"\n"<<"Cost functional on the training set = "<<cost<<endl
+:
+		cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)<<"\n"<<"Cost functional on the training set = "<<cost<<endl;
+}//End of the train function
 
 //Test function:
 pair<VectorXd,double> NeuralNetwork::test(const Eigen::MatrixXd & Data){
