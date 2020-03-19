@@ -3,6 +3,7 @@
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using namespace Optimizers;
 
 //Constructor:
 NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
@@ -62,60 +63,62 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 	//Optimizers:
 	string W_opt_name, b_opt_name;
 	switch(W_opt){
-			case 0:
-				for(size_t l=0; l<nlayers-1; ++l){
-					W_optimizer.emplace_back(make_shared<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-					W_opt_name{"Gradient descent"};
-				}
-			case 1:
-				for(size_t l=0; l<nlayers-1; ++l){
-					W_optimizer.emplace_back(make_shared<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-					W_opt_name{"GD with momentum"};
-				}
-			case 2:
-				for(size_t l=0; l<nlayers-1; ++l){
-					W_optimizer.emplace_back(make_shared<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-					W_opt_name{"RMS prop"};
-				}
-			case 3:
-				for(size_t l=0; l<nlayers-1; ++l){
-					W_optimizer.emplace_back(make_shared<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-					W_opt_name{"Adam"};
-				}
-			case 4:
-				for(size_t l=0; l<nlayers-1; ++l){
-					W_optimizer.emplace_back(make_shared<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-					W_opt_name{"AdaMax"};
-				}
-		}		
+		case 0:
+			for(size_t l=0; l<nlayers-1; ++l)
+				W_optimizer.emplace_back(make_shared<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_opt_name = "GradientDescent";
+			break;
+		case 1:
+			for(size_t l=0; l<nlayers-1; ++l)
+				W_optimizer.emplace_back(make_shared<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_opt_name = "GDwithMomentum";
+			break;
+		case 2:
+			for(size_t l=0; l<nlayers-1; ++l)
+				W_optimizer.emplace_back(make_shared<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_opt_name = "RMSprop";
+			break;
+		//case 3:
+		case 3:
+			for(size_t l=0; l<nlayers-1; ++l)
+				W_optimizer.emplace_back(make_shared<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_opt_name = "Adam";
+			break;
+		default:
+			for(size_t l=0; l<nlayers-1; ++l)
+				W_optimizer.emplace_back(make_shared<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_opt_name = "AdaMax";
+			break;
+	}		
 	
 	switch(b_opt){
-			case 0:
-				for(size_t l=0; l<nlayers-1; ++l){
-					b_optimizer.emplace_back(make_shared<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
-					b_opt_name{"Gradient descent"};
-				}
-			case 1:
-				for(size_t l=0; l<nlayers-1; ++l){
-					b_optimizer.emplace_back(make_shared<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
-					b_opt_name{"GD with momentum"};
-				}
-			case 2:
-				for(size_t l=0; l<nlayers-1; ++l){
-					b_optimizer.emplace_back(make_shared<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
-					b_opt_name{"RMS prop"};
-				}
-			case 3:
-				for(size_t l=0; l<nlayers-1; ++l){
-					b_optimizer.emplace_back(make_shared<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
-					b_opt_name{"Adam"};
-				}
-			case 4:
-				for(size_t l=0; l<nlayers-1; ++l){
-					b_optimizer.emplace_back(make_shared<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
-					b_opt_name{"AdaMax"};
-				}
-		}	
+		case 0:
+			for(size_t l=0; l<nlayers-1; ++l)
+				b_optimizer.emplace_back(make_shared<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_opt_name = "GradientDescent";
+			break;
+		case 1:
+			for(size_t l=0; l<nlayers-1; ++l)
+				b_optimizer.emplace_back(make_shared<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_opt_name = "GDwithMomentum";
+			break;
+		case 2:
+			for(size_t l=0; l<nlayers-1; ++l)
+				b_optimizer.emplace_back(make_shared<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_opt_name = "RMSprop";
+			break;
+		//case 3:
+		default:
+			for(size_t l=0; l<nlayers-1; ++l)
+				b_optimizer.emplace_back(make_shared<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_opt_name = "Adam";
+			break;
+		case 4:
+			for(size_t l=0; l<nlayers-1; ++l)
+				b_optimizer.emplace_back(make_shared<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_opt_name = "AdaMax";
+			break;
+	}	
 	
 	//Beginning of the training loop:
 	for(size_t t=1; t<=niter; ++t){
@@ -139,7 +142,7 @@ void NeuralNetwork::train(const MatrixXd & Data, const double alpha, const size_
 		//Output the current cost (a --verbose option could be useful)
 		//and check if convergence is reached:
 		if(t%25==0){
-			cout<<"t="<<t<<" cost="<<cost<<" W opt="<<W_opt_name<<" b opt="<<b_opt_name<<"\n";
+			cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<"\n";
 			err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
 			if(err<tolerance)
 				return;
