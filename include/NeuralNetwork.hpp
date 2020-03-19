@@ -7,6 +7,7 @@
 #include <utility>
 #include <limits>
 #include <iostream>
+#include <memory>
 
 #include "Optimizers.hpp"
 
@@ -33,8 +34,8 @@ private:
 	std::vector<Eigen::VectorXd> db;	//db[l]=d(cost)/d(b[l])=...=B*d(output[l])/(db[l])
 	
 	//Optimizers:
-	std::vector<Optimizers::Adam<Eigen::MatrixXd>> W_opt;
-	std::vector<Optimizers::Adam<Eigen::VectorXd>> b_opt;
+	std::vector<std::shared_ptr<Optimizers::GradientDescent<Eigen::MatrixXd>>> W_optimizer;
+	std::vector<std::shared_ptr<Optimizers::GradientDescent<Eigen::VectorXd>>> b_optimizer;
 	
 public:
 	
@@ -42,7 +43,7 @@ public:
 	NeuralNetwork(const VectorXs &);
 	
 	//Training function:
-	void train(const Eigen::MatrixXd & Data, const double alpha, const std::size_t niter, const double tolerance);
+	void train(const Eigen::MatrixXd & Data, const double alpha, const std::size_t niter, const double tolerance, const size_t W_opt, const size_t b_opt);
 	
 	//Test function:
 	std::pair<Eigen::VectorXd,double> test(const Eigen::MatrixXd & Data);
