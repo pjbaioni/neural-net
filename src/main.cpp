@@ -3,6 +3,7 @@
 #include <string>
 
 #include "NeuralNetwork.hpp"
+#include "GetPot.hpp"
 
 //The following have to be removed once i/o stuff
 //will be defined in proper files
@@ -39,9 +40,21 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 } 
 
 //To be kept:
+
+ostream & help(){
+	cout<<"Options:\n[-h], [--help]: print this help\n[-v], [--verbose]: activate verbose mode\n";
+	cout<<"[-p], [--parameters] <filename>: reads parameters from <filename>; default = ./../data/parameters.pot";
+	return cout;
+}
+
 int main(int argc, char** argv){
 	
 	//Get data:
+	GetPot commandline(arcg,argv);
+	string param_filename = commandline.follow("parameters.pot",2,"-p","--parameters");
+	if(commandline.search(2,"-h","--help")) help()<<endl;
+	bool verbose = commandline.search(2,"-v","--verbose");
+	
 	size_t ntraindata{70},nlayers{9},ntestdata{30};
 	double alpha{1e-2},tol{1e-4};
 	size_t niter{500000};
