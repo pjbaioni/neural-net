@@ -42,8 +42,10 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 //To be kept:
 
 ostream & help(){
+	cout<<"Run with ./main.out [options]\n";
 	cout<<"Options:\n[-h], [--help]: print this help\n[-v], [--verbose]: activate verbose mode\n";
-	cout<<"[-p], [--parameters] <filename>: reads parameters from <filename>; default = ./../data/parameters.pot";
+	cout<<"[-p], [--parameters] <filename>: reads parameters from <filename>;
+	cout<<" default filename = \"./../data/parameters.pot\" ";
 	return cout;
 }
 
@@ -51,43 +53,43 @@ int main(int argc, char** argv){
 	
 	//Get data:
 	GetPot commandline(arcg,argv);
-	string param_filename = commandline.follow("parameters.pot",2,"-p","--parameters");
+	string param_filename = commandline.follow("./../data/parameters.pot",2,"-p","--parameters");
 	if(commandline.search(2,"-h","--help")) help()<<endl;
 	bool verbose = commandline.search(2,"-v","--verbose");
 	
-	size_t ntraindata{70},nlayers{9},ntestdata{30};
-	double alpha{1e-2},tol{1e-4};
-	size_t niter{500000};
-	string train_filename,architecture_filename, test_filename;
-	//use GetPot here...
+	GetPot datafile(param_filename.c_str());
+	size_t ntraindata = datafile("ntraindata", 70);
+	string train_filename = datafile("train_filename", "./../data/LinspacedTrainingSet.dat");
+	size_t ntestdata = datafile("ntestdata", 30);
+	string test_filename = datafile("test_filename", "./../data/LinspacedTestSet.dat");
+	size_t nlayers = datafile("nlayers", 9);
+	string architecture_filename = datafile("architecture_filename", "./../data/architecture.dat");
+	double alpha = datafile("alpha",1e-2);
+	size_t niter = datafile("niter",500000);
+	double tol = datafile("tol",1e-4);
+	size_t W_opt = datafile("W_opt",4);
+	size_t b_opt = datafile("b_opt",3);
+	size_t nref = datafile("nref",3);
+	string prevision_filename = datafile("prevision_filename", "./../data/yhat.dat");
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
-	read_set("./../data/LinspacedTrainingSet.dat",TrainData);
+	read_set(train_filename,TrainData);
 
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
-	//read_set("architecture.dat",architecture);
-	architecture<<1,
-								3,
-								5,
-								7,
-								9,
-								7,
-								5,
-								3,
-								1;
-	//cout<<architecture<<endl;	
+	read_set(architecture_filename,architecture);
 	cout<<endl;
+	
 	//Construct the net:
 	NeuralNetwork nn(architecture);
 	
 	//Train the net:
-	nn.train(TrainData,alpha,niter,tol,4,3,3);
+	nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref); //should take verbose to turn on/off some output
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
-	read_set("./../data/LinspacedTestSet.dat",TestData);
+	read_set(test_filename,TestData);
 	
 	//Test the net:
 	VectorXd yhat;
@@ -96,7 +98,7 @@ int main(int argc, char** argv){
 	
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
-	write_vector("./../data/yhat.dat",yhat)<<endl;
+	write_vector(prevision_filename,yhat)<<endl;
 	
 	return 0;
 } 
