@@ -44,17 +44,21 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 ostream & help(){
 	cout<<"Run with ./main.out [options]\n";
 	cout<<"Options:\n[-h], [--help]: print this help\n[-v], [--verbose]: activate verbose mode\n";
-	cout<<"[-p], [--parameters] <filename>: reads parameters from <filename>;
-	cout<<" default filename = \"./../data/parameters.pot\" ";
+	cout<<"[-p], [--parameters] <filename>: reads parameters from <filename>,\n";
+	cout<<"                     default filename = \"./../data/parameters.pot\" ";
 	return cout;
 }
 
 int main(int argc, char** argv){
 	
 	//Get data:
-	GetPot commandline(arcg,argv);
+	GetPot commandline(argc,argv);
 	string param_filename = commandline.follow("./../data/parameters.pot",2,"-p","--parameters");
-	if(commandline.search(2,"-h","--help")) help()<<endl;
+	if(commandline.search(2,"-h","--help")){
+		help()<<endl;
+		return 0;
+	}
+	cout<<endl;
 	bool verbose = commandline.search(2,"-v","--verbose");
 	
 	GetPot datafile(param_filename.c_str());
@@ -79,7 +83,7 @@ int main(int argc, char** argv){
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
 	read_set(architecture_filename,architecture);
-	cout<<endl;
+	//cout<<endl;
 	
 	//Construct the net:
 	NeuralNetwork nn(architecture);
