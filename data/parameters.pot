@@ -1,0 +1,55 @@
+#####################################################################
+############## Runtime data for Neural Network - main ###############
+#####################################################################
+
+# When tuning the net, it's better to start from alpha and architecture
+# keeping others parameters s.t. the program runs long enough, with
+# nrefinements = 1. 
+# The test set should have just enough data to check the performance 
+# of the net, so for very larger set different proportions wrt train 
+# set numerosity could be tried.
+
+# Number of training samples:
+ntraindata = 70
+
+# Name of the file containing the training samples:
+#train_filename = "./../data/LinspacedTrainingSet.dat"
+
+# Number of test samples:
+ntestdata = 30
+
+# Name of the file containing the test samples:
+#test_filename = "./../data/LinspacedTestSet.dat"
+
+# Number of layers:
+nlayers = 9
+
+# Name of the file containing the architecture of the net:
+#architecture_filename = "./../data/architecture.dat"
+
+# (Initial) learning rate:
+alpha = 0.01
+
+# Maximum number of training iterations:
+niter = 50000
+
+# (Initial) Tolerance (for convergence check):
+tol = 0.0001
+
+# Weights optimizer:
+# 0 = Gradient descent
+# 1 = Gradient descent with momentum
+# 2 = RMS prop
+# 3 = Adam
+# 4 = AdaMax
+W_opt = 4
+
+# biases optimizer (values as above):
+b_opt = 3
+
+# Number of refinements for alpha decay:
+nref = 3
+
+# Name of the file containing the predicted output:
+#prevision_filename = "./../data/yhat.dat"
+
