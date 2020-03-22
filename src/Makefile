@@ -1,6 +1,6 @@
-CXXFLAGS += -std=c++14 -O3 -ffast-math
-CPPFLAGS += -I/u/sw/pkgs/toolchains/gcc-glibc/7/pkgs/eigen/3.3.3/include/eigen3 -I./../include/
-OUTPUT_OPTIONS=-o $@
+CXXFLAGS += -std=c++14 -Ofast#-O3 -ffast-math
+CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I./../include/
+OUTPUT_OPTION=-o $@
 EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
