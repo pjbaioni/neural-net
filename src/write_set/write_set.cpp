@@ -25,9 +25,9 @@ int main(){
 	const size_t ntest = datafile("ntestdata", 30);
 	VectorXd X;
 	X.setLinSpaced(ntrain,-1.5,1.5);
-	string file1{"./LinspacedTrainingSet.dat"}, file2{"./LinspacedTestSet.dat"};
-	write_set(file1,X);
+	string file1{"./../../data/LinspacedTrainingSet"+to_string(ntrain)}, file2{"./../../data/LinspacedTestSet"+to_string(ntest)};
+	write_set(file1+".dat",X);
 	X.setLinSpaced(ntest,-1.5,1.5);
-	write_set(file2,X);
+	write_set(file2+".dat",X);
 	return 0;
 }
