@@ -16,7 +16,7 @@ ntraindata = 70
 #train_filename = "./../data/LinspacedTrainingSet.dat"
 
 # Number of test samples:
-ntestdata = 30
+ntestdata = 300
 
 # Name of the file containing the test samples:
 #test_filename = "./../data/LinspacedTestSet.dat"

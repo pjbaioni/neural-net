@@ -64,9 +64,9 @@ int main(int argc, char** argv){
 	
 	GetPot datafile(param_filename.c_str());
 	size_t ntraindata = datafile("ntraindata", 70);
-	string train_filename = datafile("train_filename", "./../data/LinspacedTrainingSet.dat");
+	string train_filename = datafile("train_filename", "./../data/LinspacedTrainingSet70.dat");
 	size_t ntestdata = datafile("ntestdata", 30);
-	string test_filename = datafile("test_filename", "./../data/LinspacedTestSet.dat");
+	string test_filename = datafile("test_filename", "./../data/LinspacedTestSet300.dat");
 	size_t nlayers = datafile("nlayers", 9);
 	string architecture_filename = datafile("architecture_filename", "./../data/architecture.dat");
 	double alpha = datafile("alpha",1e-2);
@@ -75,7 +75,7 @@ int main(int argc, char** argv){
 	size_t W_opt = datafile("W_opt",4);
 	size_t b_opt = datafile("b_opt",3);
 	size_t nref = datafile("nref",3);
-	string prevision_filename = datafile("prevision_filename", "./../data/yhat.dat");
+	string prevision_filename = datafile("prevision_filename", "./../data/yhat300.dat");
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
