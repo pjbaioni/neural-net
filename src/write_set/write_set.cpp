@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstdlib>
 
+#include "GetPot.hpp"
+
 using namespace std;
 using Eigen::VectorXd;
 
@@ -18,11 +20,12 @@ void write_set(string filename, const VectorXd & X, const char & separator = ' '
 }
 
 int main(){
-	const size_t ntrain=70;
-	const size_t ntest=30;
+	GetPot datafile("./../../data/parameters.pot");
+	const size_t ntrain = datafile("ntraindata", 70);
+	const size_t ntest = datafile("ntestdata", 30);
 	VectorXd X;
 	X.setLinSpaced(ntrain,-1.5,1.5);
-	string file1{"./../data/LinspacedTrainingSet.dat"}, file2{"./../data/LinspacedTestSet.dat"};
+	string file1{"./LinspacedTrainingSet.dat"}, file2{"./LinspacedTestSet.dat"};
 	write_set(file1,X);
 	X.setLinSpaced(ntest,-1.5,1.5);
 	write_set(file2,X);
