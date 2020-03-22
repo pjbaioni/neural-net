@@ -4,6 +4,7 @@
 
 #include "NeuralNetwork.hpp"
 #include "GetPot.hpp"
+#include "gnuplot-iostream.hpp"
 
 //The following have to be removed once i/o stuff
 //will be defined in proper files
@@ -103,6 +104,18 @@ int main(int argc, char** argv){
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
 	write_vector(prevision_filename,yhat)<<endl;
+	
+	Gnuplot gp;
+	//first way:
+	vector<double> xtest(TestData.rows()),ytest(TestData.rows());
+	VectorXd::Map(&xtest[0], ntestdata) = TestData.col(0);
+	VectorXd::Map(&ytest[0], ntestdata) = TestData.col(1);
+	//second way
+	vector<double> prev(yhat.data(), yhat.data() + yhat.rows()*yhat.cols());
+	//plot:
+	gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
+  "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prev))<<
+  "w lp lw 1.5 title 'Prevision'"<<std::endl;
 	
 	return 0;
 } 
