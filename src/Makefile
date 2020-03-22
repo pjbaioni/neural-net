@@ -1,5 +1,6 @@
 CXXFLAGS += -std=c++14 -Ofast#-O3 -ffast-math
-CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I./../include/
+CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I$$mkBoostInc -I./../include/
+LDLIBS += -L$$mkBoostLib -lboost_filesystem -lboost_system -lboost_iostreams
 OUTPUT_OPTION=-o $@
 EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
@@ -18,7 +19,7 @@ all: build
 build: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ $(OUTPUT_OPTION)
+	$(CXX) $(CXXFLAGS) $(LDLIBS) $^ $(OUTPUT_OPTION)
 
 clean:
 	$(RM) $(OBJS)
