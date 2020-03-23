@@ -91,7 +91,7 @@ int main(int argc, char** argv){
 	NeuralNetwork nn(architecture);
 	
 	//Train the net:
-	nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref); //should take verbose to turn on/off some output
+	nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref,verbose); //should take verbose to turn on/off some output
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);

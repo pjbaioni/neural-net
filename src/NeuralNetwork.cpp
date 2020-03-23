@@ -32,7 +32,7 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 
 //Training function:
 void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance
-                          , const size_t W_opt, const size_t b_opt, const size_t nrefinements){                     
+                          , const size_t W_opt, const size_t b_opt, const size_t nrefinements, const bool verbose){                     
 	///////////////////
 	//      Init     //
 	///////////////////
@@ -147,7 +147,7 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 			/////////////////////////
 			//Output the current cost (a --verbose option could be useful)
 			//and check if convergence is reached:
-			if(t%25==0){
+			if( verbose && (t%25==0) ){
 				cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
 				err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
 				if(err<tolerance){
