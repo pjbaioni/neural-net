@@ -6,11 +6,12 @@ EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:%.cpp=%.o)
+VERBOSE=
 
 main.o: $(HEADERS) $(SRCS)
 NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
 
-.PHONY: all build clean distclean run
+.PHONY: all build clean distclean help run
 
 .DEFAULT_GOAL = build
 
@@ -28,4 +29,7 @@ distclean: clean
 	$(RM) $(EXE)
 
 run:
-	./$(EXE)
+	./$(EXE) $(VERBOSE)
+
+help:
+	./$(EXE) "--help"

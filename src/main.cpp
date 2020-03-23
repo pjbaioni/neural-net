@@ -60,7 +60,6 @@ int main(int argc, char** argv){
 		return 0;
 	}
 	cout<<endl;
-	//cout.flush();
 	bool verbose = commandline.search(2,"-v","--verbose");
 	
 	GetPot datafile(param_filename.c_str());
@@ -85,7 +84,6 @@ int main(int argc, char** argv){
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
 	read_set(architecture_filename,architecture);
-	//cout<<endl;
 	
 	//Construct the net:
 	NeuralNetwork nn(architecture);
