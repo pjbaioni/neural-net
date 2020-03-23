@@ -35,14 +35,14 @@ class GDwithMomentum : public GradientDescent<T>{
 protected:
 	T mt;
 	double beta{0.9};
-public:
-	GDwithMomentum(const size_t & m, const size_t &n):GradientDescent<T>::GradientDescent(m,n),mt(m,n){}
-	virtual void set_beta(double b){beta=b;}
 	
-	//Public just to be able to use an "has a" paradigm in Adam instead of multiple inheritance:
 	virtual void compute_momentum(const T & to_be_averaged){
 		mt = beta*mt + (1. - beta)*to_be_averaged;
 	}
+public:
+	GDwithMomentum(const size_t & m, const size_t &n):GradientDescent<T>::GradientDescent(m,n),mt(m,n){}
+	virtual void set_beta(double b){beta=b;}
+
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
 		compute_momentum(gt);
 		this->update_objective(theta,mt,alpha);
@@ -50,15 +50,20 @@ public:
 };
 
 template<typename T>
+class Adam;
+
+template<typename T>
 class RMSprop final : public GDwithMomentum<T>{
 private:
 	double epsilon{1e-8};
+	
+	friend class Adam<T>;
 public:
 	RMSprop(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
 	virtual void set_eps(double e){epsilon=e;}
 	//These 2 are needed to use "has a" in Adam, but they would be unnecessary e.g. with multiple inheritance
-	double get_eps(){return epsilon;}
-	const T& get_st(){return this->mt;}
+	//double get_eps(){return epsilon;}
+	//const T& get_st(){return this->mt;}
 	
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
 		this->compute_momentum(gt.cwiseProduct(gt));
@@ -98,7 +103,7 @@ public:
 		//T vt_hat = correction_step(this->beta2,t,rms.get_st());
 		//update:
 		//this->update_objective(theta,( mt_hat.cwiseProduct( ( 1./(rms.get_eps() + sqrt(vt_hat.array())) ).matrix() )), alpha);
-		this->update_objective(theta,( (correction_step(this->beta,t,this->mt)).cwiseProduct( ( 1./(rms.get_eps() + sqrt((correction_step(this->beta2,t,rms.get_st())).array())) ).matrix() )), alpha);
+		this->update_objective(theta,( (correction_step(this->beta,t,this->mt)).cwiseProduct( ( 1./(rms.epsilon + sqrt((correction_step(this->beta2,t,rms.mt)).array())) ).matrix() )), alpha);
 	}	
 
 };
