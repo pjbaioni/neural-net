@@ -7,9 +7,11 @@ Mailto: paolojoseph.baioni@mail.polimi.it
 
 Development is still ongoing, at the moment of writing:
 
-The repo contains 3 directories:
+The repo contains 4 directories:
  - data, containing input data, output data, plots and
    gnuplot script to generate them
+ - doc, containing some documentation of the code and of the
+   adopted mathematical methodology
  - include, containing header files which have to been included,
    among which Optimizers.hpp, that holds the full implementation
    of the optimizers, since they are class templates
@@ -31,3 +33,6 @@ virtual machine running the a.y. 19-20 modules have shown some differences
 that are being investigated.
 In both cases gnuplot is required (version 5.0), but numerical output
 is produced anyway, on the terminal and on the output file.
+
+Documentation has been compiled using TeX 3.14159265 (TeX Live 2016/Debian).
+
