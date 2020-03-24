@@ -8,9 +8,11 @@
 \theoremstyle{definition}
 \newtheorem{Example}{Example}
 \newtheorem{Theorem}{Theorem}
+\newtheorem{ToDo}{ToDo}
 
 \usepackage{varioref,hyperref,cleveref}
-\usepackage{graphicx,caption,float,epstopdf,subfig}
+\usepackage[pdftex]{graphicx}
+\usepackage{caption,float,epstopdf,subfig}
 
 \renewcommand{\thefigure}{\arabic{figure}}
 
@@ -35,16 +37,19 @@
 				{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
 				{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1}
 
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}} 
 	
 \title{\textbf{Deep Learning for PDEs}}
-\author{Paolo Joseph Baioni\renewcommand{\thefootnote}{\fnsymbol{footnote}}\footnote{\href{mailto:paolojoseph.baioni@mail.polimi.it}{paolojoseph.baioni@mail.polimi.it}}}
+\author{Paolo Joseph Baioni\footnote{\href{mailto:paolojoseph.baioni@mail.polimi.it}{paolojoseph.baioni@mail.polimi.it}}}
 \date{\today}
-
 
 \begin{document}
 
 	
 \maketitle
+
+\renewcommand*{\thefootnote}{\arabic{footnote}}
+\setcounter{footnote}{0}
 
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,7 +78,8 @@ In this project we proposed ourselves to get into deep learning techniques and s
 In chapter \ref{chapter1} we present the general architecture of a Deep Neural Network (DNN) and the main idea of functioning of the algorithm that allows it to learn from the data (Deep Learning), consisting of two phases, called \textit{forward propagation} and \textit{backward propagation}. Therefore, some  sector-specific issues are considered in detail, such as: distinction between train, development and test sets, problems related to overfitting, possible regularization techniques aimed at reducing it, different optimization algorithms and an overview of the main parameters that must be tuned adequately to get good results.\\
 In chapter \ref{chapter2} two possible approaches to solving PDEs via DNNs are exposed, also highlighting some choices that can be made in the formulation of the problem and in treating the boundary conditions. We then deepen the comparison between DNNs and the piecewise continuous linear function which are used as bases of finite element spaces of order one, in order to provide a greater intuition of the reasons why the DNN-based method works and to identify, albeit in this particular case, some general indications on the ideal number of nodes and layers of the DNN.\\
 In chapter \ref{chapter3} we explain the programming architectural choices and the structure of the developed code, freely available on {GitHub\footnote{\href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}}, as well as possible extensions.\\
-In chapter \ref{chapter4}, after providing instructions on how to compile, link and run the program, we show some examples by means of benchmark cases.
+In chapter \ref{chapter4}, after providing instructions on how to compile, link and run the program, we show some examples by means of benchmark cases.\\
+In appendix we report the FreeFem++ written for the computations performed in section \ref{section2.2}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -103,12 +109,35 @@ In chapter \ref{chapter4}, after providing instructions on how to compile, link 
 
 
 \chapter{Implementation of neural-net}\label{chapter3}
+In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given.\\
+The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the author's page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\\
+In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the Readme.md file and in chapter \ref{chapter4}, where it is shown how to build the program and run an example. 
+
+\section{Directory tree}
+Downloading the repository ``neural-net'' one's find:
+\begin{itemize}
+	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, \cite{gnuplot} scripts in .gnu format, and their graphical output in .png format;
+	\item the \textit{doc} folder, containing this documentation in .tex and .pdf format, plus the \textit{img} sub-folder where there are the images included by the TeX file;
+	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters file and command line option, \textit{gnuplot-iostream.hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork \textbf{class}, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as \textbf{class templates};
+	\item the \textit{src} folder, which contain the source files main.cpp, NeuralNetwork.cpp, where the NeuralNetwork class member functions are defined, the Makefile which can be used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets is placed;
+	\item the COPYING file, a plain text file containing copying informations and licenses;
+	\item the \textit{Readme.md} file, a markdown file containing basic informations;
+	\item the (hidden) \textit{.gitignore} file, that trace the file extensions which are not being pushed to the remote, mainly compilation files, executables and comments file.
+\end{itemize}
+\noindent Despite the different extensions, every non-png nor non-pdf file can be opened by any text editor.
+\section{The Neural Network class}
+\section{The Optimizers class templates}
+\section{Write\_set and data}
+\section{The main}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\chapter{Benchmarks examples}\label{chapter4}
+\chapter{Examples}\label{chapter4}
+
+\section{Building instructions}
+\section{Reconstruction of a wave packet}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -117,17 +146,31 @@ In chapter \ref{chapter4}, after providing instructions on how to compile, link 
 \chapter*{Conclusions and further developments}
 \addcontentsline{toc}{chapter}{Conclusions and further developments}
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\appendix
+\chapter*{Appendix}\label{appendix}
+\addcontentsline{toc}{chapter}{Appendix}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \newpage
 \begin{thebibliography}{10}
 	\addcontentsline{toc}{chapter}{Bibliography}
 	
+	\bibitem[APSC]{PACS} Advanced Programming for Scientific Computing course lectures, Politecnico di Milano, 2019.
 	\bibitem[Andrew NG]{AndrewNG} Professor Andrew NG's Deep Learning MOOC at Coursera, \href{https://www.coursera.org/specializations/deep-learning}{\emph{https://www.coursera.org/specializations/deep-learning}}, consulted in 2019.
+	\bibitem[Boost]{boost} Boost C++ libraries, \href{https://www.boost.org/}{\emph{https://www.boost.org/}}
 	\bibitem[cppreference.com]{cppreference} An online reference of the C++ language, \href{https://en.cppreference.com/w/cpp}{\emph{https://en.cppreference.com/w/cpp}}
 	\bibitem[Eigen]{eigen} Eigen C++ template library for linear algebra, \href{https://eigen.tuxfamily.org/}{\emph{https://eigen.tuxfamily.org/}}
 	\bibitem[GetPot]{getpot} GetPot command line parser, \href{http://getpot.sourceforge.net/}{\emph{http://getpot.sourceforge.net/}}
+	\bibitem[Git]{git} Git distributed version control system, \href{https://git-scm.com/}{\emph{https://git-scm.com/}}
 	\bibitem[gnuplot]{gnuplot} A GNU graphing utility, \href{http://www.gnuplot.info/}{\emph{http://www.gnuplot.info/}}
 	\bibitem[gnuplot-iostream]{gnuplot-iostream} A C++ interface to gnuplot, \href{https://github.com/dstahlke/gnuplot-iostream}{\emph{https://github.com/dstahlke/gnuplot-iostream}}
 	\bibitem[Jinchao Xu et al.]{Jinchao} Juncai He, Lin li, Jinchao Xu, Chunyue Zheng, \emph{ReLU Deep Neural Networks and Linear Finite Elements}, 2018, found at \href{https://arxiv.org/abs/1807.03973}{\emph{https://arxiv.org/abs/1807.03973}}
