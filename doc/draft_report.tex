@@ -46,15 +46,6 @@
 	
 \maketitle
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
-
-
-\chapter*{Disclaimer}
-\renewcommand*{\thefootnote}{\arabic{footnote}}
-\setcounter{footnote}{0}
-
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
@@ -74,6 +65,15 @@
 
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
+
+The numerical solution of partial derivative equations (PDEs) plays a fundamental role in applied mathematics, science and engineering. \\
+The recent advances in machine learning (ML) and the successes obtained by the application of these techniques in various areas suggest the possibility of using ML in solving PDEs. This approach has considerable potential compared to other numerical methods: from the possibility of writing mesh-free algorithms to that of solving data-learned equations, whose explicit functional form is unknown; however the theory is not yet developed and consequently important results of convergence and stability are missing, as well as general rules that would allow to identify the optimal parameters for the design of numerical codes. Finally, some intrinsic characteristics of the method make it considerable as a  tool which is complementary to traditional numerical methods, finding application in the field of real-time control. \\
+In this project we proposed ourselves to get into deep learning techniques and study their  possible applications to PDEs, also reporting some useful theoretical results, and to implement from scratch a neural network based C++ program, so to have a low-level, detailed and complete understanding of the method.
+\\The structure of the report is as follows.\\
+In chapter \ref{chapter1} we present the general architecture of a Deep Neural Network (DNN) and the main idea of functioning of the algorithm that allows it to learn from the data (Deep Learning), consisting of two phases, called \textit{forward propagation} and \textit{backward propagation}. Therefore, some  sector-specific issues are considered in detail, such as: distinction between train, development and test sets, problems related to overfitting, possible regularization techniques aimed at reducing it, different optimization algorithms and an overview of the main parameters that must be tuned adequately to get good results.\\
+In chapter \ref{chapter2} two possible approaches to solving PDEs via DNNs are exposed, also highlighting some choices that can be made in the formulation of the problem and in treating the boundary conditions. We then deepen the comparison between DNNs and the piecewise continuous linear function which are used as bases of finite element spaces of order one, in order to provide a greater intuition of the reasons why the DNN-based method works and to identify, albeit in this particular case, some general indications on the ideal number of nodes and layers of the DNN.\\
+In chapter \ref{chapter3} we explain the programming architectural choices and the structure of the developed code, freely available on {GitHub\footnote{\href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}}, as well as possible extensions.\\
+In chapter \ref{chapter4}, after providing instructions on how to compile, link and run the program, we show some examples by means of benchmark cases.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,20 +102,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\chapter{Neural network implementation}\label{chapter3}
+\chapter{Implementation of neural-net}\label{chapter3}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\chapter{Test cases}\label{chapter4}
+\chapter{Benchmarks examples}\label{chapter4}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \chapter*{Conclusions and further developments}
-\addcontentsline{toc}{chapter}{Conclusions}
+\addcontentsline{toc}{chapter}{Conclusions and further developments}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
