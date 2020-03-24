@@ -1,6 +1,14 @@
 # Personal comments:
 *.ignore
 
+# LaTeX compilation files
+# (ignoring everything but .tex and .pdf)
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.toc
+
 # Prerequisites
 *.d
 
