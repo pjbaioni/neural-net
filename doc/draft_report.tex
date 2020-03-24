@@ -18,28 +18,113 @@
 \usepackage[dvipsnames]{xcolor}
 
 \lstset{language=[ISO]C++,
-		backgroundcolor = \color{blue!5!white},
-		aboveskip=10pt, belowskip=10pt,
-		numbers=left, numberstyle=\tiny,
-		tabsize=2,
-		breaklines=true,
-		basicstyle=\small\ttfamily,
-		keywordstyle = \color{blue!50!cyan}\bfseries,
-		commentstyle = \color{darkgray!90},
-		stringstyle = \color{OliveGreen},
-		morecomment=[l][\color{violet!90!black}]{\#},
-		identifierstyle=\color{blue!25!black}}
+				backgroundcolor = \color{blue!5!white},
+				aboveskip=10pt, belowskip=10pt,
+				numbers=left, numberstyle=\tiny,
+				tabsize=2,
+				breaklines=true,
+				basicstyle=\small\ttfamily,
+				keywordstyle = \color{blue!50!cyan}\bfseries,
+				commentstyle = \color{darkgray!90},
+				stringstyle = \color{OliveGreen},
+				morecomment=[l][\color{violet!90!black}]{\#},
+				identifierstyle=\color{blue!25!black}
+				literate=
+				{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+				{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+				{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+				{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1}
 
 	
 \title{\textbf{Deep Learning for PDEs}}
-\author{Paolo J. Baioni}
+\author{Paolo Joseph Baioni\renewcommand{\thefootnote}{\fnsymbol{footnote}}\footnote{\href{mailto:paolojoseph.baioni@mail.polimi.it}{paolojoseph.baioni@mail.polimi.it}}}
 \date{\today}
 
+
 \begin{document}
+
 	
-	\maketitle
+\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+
+
+\chapter*{Disclaimer}
+\renewcommand*{\thefootnote}{\arabic{footnote}}
+\setcounter{footnote}{0}
+
 	
-	\tableofcontents
-	\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 	
+
+\chapter*{Acknowledgements}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+\tableofcontents
+\clearpage
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\chapter{Neural Networks and Deep Learning}\label{chapter1}
+
+\section{Architecture and operation of a Deep Neural Network}\label{section1.1}
+
+\section{Further insights}\label{section1.2}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\chapter{Application to PDEs}\label{chapter2}
+
+\section{The Poisson-Dirichlet problem}\label{section2.1}
+
+\section{Some more in-depth theoretical results}\label{section2.2}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\chapter{Neural network implementation}\label{chapter3}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\chapter{Test cases}\label{chapter4}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\chapter*{Conclusions and further developments}
+\addcontentsline{toc}{chapter}{Conclusions}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\begin{thebibliography}{10}
+	\addcontentsline{toc}{chapter}{Bibliography}
+	
+\end{thebibliography}
+
+
 \end{document}	
