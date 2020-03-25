@@ -19,23 +19,29 @@
 \usepackage{listings}
 \usepackage[dvipsnames]{xcolor}
 
-\lstset{language=[ISO]C++,
-				backgroundcolor = \color{blue!5!white},
-				aboveskip=10pt, belowskip=10pt,
-				numbers=left, numberstyle=\tiny,
-				tabsize=2,
-				breaklines=true,
-				basicstyle=\small\ttfamily,
-				keywordstyle = \color{blue!50!cyan}\bfseries,
-				commentstyle = \color{darkgray!90},
-				stringstyle = \color{OliveGreen},
-				morecomment=[l][\color{violet!90!black}]{\#},
-				identifierstyle=\color{blue!25!black}
-				literate=
-				{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
-				{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
-				{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
-				{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1}
+\lstset{
+	language=[ISO]C++,
+	backgroundcolor = \color{blue!5!white},
+	aboveskip=10pt, belowskip=10pt,
+	numbers=left, numberstyle=\tiny,
+	tabsize=2,
+	breaklines=true,
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle = \color{blue!50!cyan}\bfseries,
+	commentstyle = \color{darkgray!90},
+	stringstyle = \color{OliveGreen},
+	morecomment=[l][\color{violet!90!black}]{\#},
+	identifierstyle=\color{blue!25!black}
+}
+
+
+\lstdefinelanguage{FreeFem++}[]{C++}{
+	morekeywords={int, border, t, pi, label, x, y, sin, cos, pi, mesh, buildmesh, fespace, P1, cout, endl, real, P2, plot, fill, value, cmm, wait, func, macro, solve, solver, CG, int2d, sqrt}
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle = \color{blue!25!black},
+	stringstyle = \color{blue!25!black}
+}
+	
 
 \renewcommand*{\thefootnote}{\fnsymbol{footnote}} 
 	
@@ -93,32 +99,31 @@ In the section \ref{section1.1} we explain foundations of neural networks, with 
 In the section \ref{section1.2} we talk about some, in a certain sense more practical, aspects of constructing a DNN, which in turn really make the difference in making the algorithm effective. Indeed it turns out that in order to build up a DNN which actually performs well it is necessary to consider with care: the tuning of \textit{hyperparameters}, that are the parameters which are not being optimized by the neural network, the problems arising from over/under-fitting of the data and the techniques used to deal with them, which go under the name of \textit{regularization}, as well as different optimization algorithms, which can become very relevant in order to not being stuck in a local minima.\\
 
 \section{Architecture and operation of a Deep Neural Network}\label{section1.1}
-Network}\label{section1.1}
 The very fundamental unit which compose every neural network is the \textit{node} or \textit{neuron}, that is a structure that takes some input features, performs a specific transformation on them, and gives the output:
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=10cm]{img/node}
 \caption{}\label{fig1}
 \end{figure}
-\newline To gain an intuition of what a node is really doing, it's useful to get a more precise idea of a possible problem we could want to face with our node and of an appropriate map $f:X\rightarrow Y$ we might want to use.
+\noindent To gain an intuition of what a node is really doing, it's useful to get a more precise idea of a possible problem we could want to face with our node and of an appropriate map $f:X\rightarrow Y$ we might want to use.
 \begin{Example}\label{example1}
 Consider a given dataset $\{(x_i,y_i)\}$ like the one in the next picture, and suppose to have to find an appropriate relation in the form $y=f(x)$ in order to predict the value of the variable $y$, even for unknown $x$ which we might encounter in the future.
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=7.5cm]{img/regression1}
 	\caption{}
 \end{figure}
-\newline As widely known, linear regression can be a first good answer to the problem, so, once performed the calculations, we are able to write:
+\noindent As widely known, linear regression can be a first good answer to the problem, so, once performed the calculations, we are able to write:
 \[
 y=wx + b
 \]
 for some $w,b$; let's call this linear transformation $L\!: \, Lx=wx+b$. Now suppose that the output $y$ has a constrain, e.g. that $y\ge0$ must hold\footnote{The reason why non linear function like the one arising from this constrain are needed in deep learning will be seen in the end of this section.} $ \forall y $. Then it would be reasonable to update the $f$ function as in the figure below:
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=7.5cm]{img/regression2} 
 	\caption{}
 \end{figure}
-\newline Which mathematically means:
+\noindent Which mathematically means:
 \[
 y=max\{0,wx+b\}
 \]
@@ -132,13 +137,12 @@ In the deep learning literature the non linear function acting after the linear 
 The main ideas behind it can be divided in two: a ``divide et impera''-like approach and a statistical-like one, based on random functions and optimization of appropriate functionals.\\
 For what concerns the first, the idea is to stuck together different nodes in order to be able to reconstruct complex behaviors as the composition of simpler ones. This assembly of nodes is performed in two fashions: from one side we can imagine to feed in the data to different neurons, which will calculate their own output, and then to put together the outputs, building up what in the literature is called a \textit{layer} of nodes. From the other side we can put different layer in sequence, so that the first layer takes the input from the data, the second layer takes as input the output of the first one, and so on, until the last layer outputs the predicted y.\footnote{Technically it's more correct to say ``every node in the $n\!-\!th$ layer takes the input from every node in the $(n+1)\!-\!th$ layer'', but it's preferred to use the short sentence above when it's clear enough.}\\
 Following the literature we call \textit{Hidden layer} every intermediate layer, as in the following picture.
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.95\textwidth]{img/neuralnet}
 \caption{}\label{neuralnet}
 \end{figure}
-\newline
-In deep learning the above mentioned process that brings the input to the output, passing by all the intermediate layers, is called \textit{forward propagation}, or, in short, forprop, and constitute the first part of the training algorithm of a neural network.\\
+\noindent In deep learning the above mentioned process that brings the input to the output, passing by all the intermediate layers, is called \textit{forward propagation}, or, in short, forprop, and constitute the first part of the training algorithm of a neural network.\\
 \newline \noindent One surprising aspect of neural networks is that they don't require their designer to decide which node of the first layer takes which part of the input, nor which nodes of the $n\!-\!th$ layer a generic node of the $(n+1)\!-\!th$ layer should consider, neither how much importance any node should give to each of its inputs. In fact, he gives all the inputs to every node, and let the neural network find it out by itself. In other words, given enough training example, i.e. enough $(x_i,y_i)$ known couples, neural networks are remarkably good at figuring out how to map unknown $x$ to the right $y$.\\
 This capability is achieved by means of the second main idea of neural networks: what is called \textit{back propagation}, or backprop.\\
 Let's consider again the single node as in figure \ref{fig1}, with $y=ReLU(wx+b)$. More precisely in this case we have:
@@ -469,6 +473,84 @@ Downloading the repository ``neural-net'' one's find:
 \appendix
 \chapter*{Appendix}\label{appendix}
 \addcontentsline{toc}{chapter}{Appendix}
+The code used in section \ref{section2.2} follows:
+\begin{lstlisting}[language=FreeFem++, frame=single, name=extimate_dof, showstringspaces=false]
+// Code written to extimate the number of degrees 
+// of freedom (dof) needed to reach a good extimate
+// in section 2.2 of the report.
+
+///////////////////////////////////
+////////////Instructions///////////
+///////////////////////////////////
+
+/*	
+To run the code, save it as and edp file: <filename>.edp
+(Note that edp files can be opened by any text editor, saving
+as .txt works as well)
+Then in a terminal emulator do:
+$ FreeFem++ filename.edp
+
+The code has been tested on Debian 9.9,
+equipped with FreeFem++ version  3.47 
+
+pjbaioni 2020
+*/
+
+///////////////////////////////////
+////////////////Code///////////////
+///////////////////////////////////
+
+// Mesh
+int n=36; //n -> dofs: 9 -> 13, 12 -> 20, 16 -> 30 , 18 -> 41, 20 -> 45 ...
+border c(t=0, 2*pi){x=cos(t); y=sin(t); label=1;}
+mesh Th=buildmesh(c(n));
+plot(Th,cmm="Mesh",wait=1);
+
+// Space
+fespace Vh(Th,P1);
+cout<<"Degrees of freedom N = "<<Vh.ndof<<endl;
+
+// Manufactured solution:
+real a=1.;
+mesh T=buildmesh(c(5*n));
+fespace V(T,P2);
+V uexact = exp(-a*(x^2+y^2))*(x^2+y^2-1);
+plot(uexact,fill=1,value=1,cmm="u_exact_h",wait=1);
+
+// Data
+func f = -4*exp(-a*(x^2 + y^2))*(a^2*x^4 + 2*a^2*x^2*y^2 - a^2*x^2 + a^2*y^4 - a^2*y^2 - 3*a*x^2 - 3*a*y^2 + a + 1);
+func g = 0;
+
+// Solution
+Vh uh,vh;
+macro grad(u) [dx(u), dy(u)] //
+solve poisson2d(uh,vh,solver=CG)=int2d(Th)(grad(uh)'*grad(vh))
+-int2d(Th)(f*vh)
++on(1,uh=g);
+plot(uh,fill=1,value=1,cmm="uh",wait=1);
+
+//L2 error (normalized)
+real num=int2d(Th)((uexact-uh)*(uexact-uh)); num=sqrt(num);
+real den1=int2d(Th)(uexact*uexact); den1=sqrt(den1);
+real den2=int2d(Th)(uh*uh); den2=sqrt(den2);
+real den=(den1+den2)/2;
+cout<<"Relative error in  L2 norm = "<<num/den<<endl;
+
+// Expected output:
+/*
+  --  mesh:  Nb of Triangles =    236, Nb of Vertices 137
+Degrees of freedom N = 137
+--  mesh:  Nb of Triangles =   5706, Nb of Vertices 2944
+-- Solve : 
+min -0.981309  max -1.42832e-31
+Relative error in  L2 norm = 0.0165159
+times: compile 0.016902s, execution 0.093685s,  mpirank:0
+CodeAlloc : nb ptr  2902,  size :366776 mpirank: 0
+Ok: Normal End
+*/
+
+\end{lstlisting}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
