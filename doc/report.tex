@@ -86,7 +86,7 @@ In chapter \ref{chapter1} we present the general architecture of a Deep Neural N
 In chapter \ref{chapter2} two possible approaches to solving PDEs via DNNs are exposed, also highlighting some choices that can be made in the formulation of the problem and in treating the boundary conditions. We then deepen the comparison between DNNs and the piecewise continuous linear function which are used as bases of finite element spaces of order one, in order to provide a greater intuition of the reasons why the DNN-based method works and to identify, albeit in this particular case, some general indications on the ideal number of nodes and layers of the DNN.\\
 In chapter \ref{chapter3} we explain the programming architectural choices and the structure of the developed code, freely available on {GitHub\footnote{\href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}}, as well as possible extensions.\\
 In chapter \ref{chapter4}, after providing instructions on how to compile, link and run the program, we show some examples by means of benchmark cases.\\
-In appendix we report the \cite{freefem++} code written for the computations performed in section \ref{section2.2}.
+In \hyperref[appendix]{appendix} we report the \cite{freefem++} code written for the computations performed in section \ref{section2.2}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -340,6 +340,7 @@ where in both cases \textit{t} stands for the iteration number and $\alpha_0$ is
 
 
 \chapter{Application to PDEs}\label{chapter2}
+\setcounter{figure}{5}
 The idea of applying machine learning to numerical analysis can be traced back up to \cite{Lagaris}, who tried to solve ODEs and PDEs by means of neural networks. The authors have shown some of the potential of DNNs, such as their being excellent interpolators and the ease of parallelization of the deep learning algorithm; moreover they proposed a first comparison with finite element method and faced the problem one encounters when dealing with BVPs in a deep learning setting, which we will expose too. However they still use a mesh, which is a not necessary burden as we'll show, and they used a shallow neural network, with only one hidden layer, that, albeit theoretically able to recover any continuous function, is quite far from being optimal.\\
 More recently the explosion of the Big Data field has given rise to stronger interests in deep learning, leading to the development of new tools which are being applied in the study of PDEs too with promising results; for example \cite{Sirignano} face the problem of dimensionality, solving PDEs in space up to 200 dimension using a mesh-free algorithm.\\
 Anyway research in this field is still very young, most of the papers having 1-2 years old, and coherently there isn't a solid general theoretical framework as the one of FEM; nonetheless there already are some interesting results, like the one of \cite{Jinchao}.\\
@@ -408,7 +409,7 @@ To fix the ideas it has been considered $d=2$ and $\Omega$ being the unit circle
 \noindent To do an estimate it's thus possible to assume $k_h=6$.\\
 To find a proper value for N we consider the very well-behaved solution:
 \[u_{exact}=e^{-(x^2+y^2)}(x^2+y^2-1)\]
-of the problem \eqref{PoissonDirichlet} obtained computing $f$ as $\Delta u_{exact}$; we then solve the problem different times using the FOSS software \cite{FreeFem++} refining the mesh until a good result is reached.\footnote{Code in \ref{appendix}}. \\
+of the problem \eqref{PoissonDirichlet} obtained computing $f$ as $\Delta u_{exact}$; we then solve the problem different times using the FOSS software \cite{freefem++} refining the mesh until a good result is reached.\footnote{Code in \ref{appendix}}. \\
 We obtain a relative $L_2$ error, defined as $err_{L_2} = \frac{||u_{exact}-u_h||_2}{ \frac{1}{2} (||u_{exact}||_2+||u_h||_2) }  $, of $1.65\%$ when using 36 triangles on the border of the domain, as in figure \ref{k_h}, which lead to a $V_h$ space with 137 degrees of freedom:
 \begin{figure}[H]
 	\centering
@@ -428,6 +429,7 @@ are needed, confirming that a deep neural network is computational more convenie
 
 
 \chapter{Implementation of neural-net}\label{chapter3}
+\setcounter{figure}{8}
 In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given.\\
 The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the author's page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\\
 In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the README.md file and in chapter \ref{chapter4}, where it is shown how to build the program and run an example. 
