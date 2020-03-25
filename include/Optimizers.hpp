@@ -61,9 +61,6 @@ private:
 public:
 	RMSprop(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
 	virtual void set_eps(double e){epsilon=e;}
-	//These 2 are needed to use "has a" in Adam, but they would be unnecessary e.g. with multiple inheritance
-	//double get_eps(){return epsilon;}
-	//const T& get_st(){return this->mt;}
 	
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
 		this->compute_momentum(gt.cwiseProduct(gt));
