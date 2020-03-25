@@ -73,7 +73,7 @@
 \addcontentsline{toc}{chapter}{Introduction}
 
 The numerical solution of partial derivative equations (PDEs) plays a fundamental role in applied mathematics, science and engineering. \\
-The recent advances in machine learning (ML) and the successes obtained by the application of these techniques in various areas suggest the possibility of using ML in solving PDEs. This approach has considerable potential compared to other numerical methods: from the possibility of writing mesh-free algorithms to that of solving data-learned equations, whose explicit functional form is unknown; however the theory is not yet developed and consequently important results of convergence and stability are missing, as well as general rules that would allow to identify the optimal parameters for the design of numerical codes. Finally, some intrinsic characteristics of the method make it considerable as a  tool which is complementary to traditional numerical methods, finding application in the field of real-time control. \\
+The recent advances in machine learning (ML) and the successes obtained by the application of these techniques in various areas suggest the possibility of using ML in solving PDEs. This approach has considerable potential compared to other numerical methods, for example it makes feasible to write mesh-free algorithms, however the theory is not yet developed and consequently important results of convergence and stability are missing, as well as general rules that would allow to identify the optimal parameters for the design of numerical codes. Finally, some intrinsic characteristics of the method make it considerable as a  tool which is complementary to traditional numerical methods, finding application in the field of real-time control. \\
 The aim of this project is to get into deep learning techniques and study their  possible applications to PDEs, also reporting some useful theoretical results, as a complement to the methods illustrated during the NAPDE course, and to implement from scratch a Numerical Analysis relevant Neural Networks based C++ program, so to both gain and verify a low-level, detailed and complete understanding of the method and to experiment on some of the programming techniques that have been deepened during the APSC and \textit{``Strumenti di sviluppo e distribuzione di software per la ricerca scientifica''} courses held at PoliMi.\\
 The structure of the report is as follows.\\
 In chapter \ref{chapter1} we present the general architecture of a Deep Neural Network (DNN) and the main idea of functioning of the algorithm that allows it to learn from the data (Deep Learning), consisting of two phases, called \textit{forward propagation} and \textit{backward propagation}. Therefore, some  sector-specific issues are considered in detail, such as: distinction between train, development and test sets, problems related to overfitting, possible regularization techniques aimed at reducing it, different optimization algorithms and an overview of the main parameters that must be tuned adequately to get good results.\\
@@ -336,10 +336,87 @@ where in both cases \textit{t} stands for the iteration number and $\alpha_0$ is
 
 
 \chapter{Application to PDEs}\label{chapter2}
+The idea of applying machine learning to numerical analysis can be traced back up to \cite{Lagaris}, who tried to solve ODEs and PDEs by means of neural networks. The authors have shown some of the potential of DNNs, such as their being excellent interpolators and the ease of parallelization of the deep learning algorithm; moreover they proposed a first comparison with finite element method and faced the problem one encounters when dealing with BVPs in a deep learning setting, which we will expose too. However they still use a mesh, which is a not necessary burden as we'll show, and they used a shallow neural network, with only one hidden layer, that, albeit theoretically able to recover any continuous function, is quite far from being optimal.\\
+More recently the explosion of the Big Data field has given rise to stronger interests in deep learning, leading to the development of new tools which are being applied in the study of PDEs too with promising results; for example \cite{Sirignano} face the problem of dimensionality, solving PDEs in space up to 200 dimension using a mesh-free algorithm.\\
+Anyway research in this field is still very young, most of the papers having 1-2 years old, and coherently there isn't a solid general theoretical framework as the one of FEM; nonetheless there already are some interesting results, like the one of \cite{Jinchao}.\\
+The aim of the present chapter is to outline possible ways of proceeding for problems that one most often encounters in engineering and applied sciences, taking as example the classical Poisson-Dirichlet problem, highlighting pros and cons of the method too (section \ref{section2.1}), and then to provide some useful theoretical result (section \ref{section2.2}), which compare DNNs accuracy w.r.t. FEMs.
 
 \section{The Poisson-Dirichlet problem}\label{section2.1}
+There are different ways to employ deep learning to solve the Poisson-Dirichlet problem:
+\begin{equation}\label{PoissonDirichlet}
+\begin{cases}
+-\Delta u = f \quad\quad in\, \Omega\\
+u_{|_{\partial\Omega}}=g\qquad on\, \partial\Omega 
+\end{cases}
+\end{equation}
+Recently \cite{Kailai} have obtained good results in few dimension with well-behaved manufactured solutions; their strategy is based on \cite{Lagaris} for the treatment of the boundary condition and on \cite{Sirignano} for the mesh; this method follows.\\
+Having in mind what has been said in chapter \ref{chapter1}, the first thing to do is to generate the datasets. Concerning this, there are at least two important things to notice: 
+\begin{itemize}
+	\item the point can be sampled randomly in $\overline{\Omega}$, so to wipe out the need of a mesh, guaranteeing in this way large computational savings, especially in high dimension;
+	\item the probability that points given by a random generator lie on $\partial \Omega$ is technically zero, since $|\partial\Omega|/|\Omega|=0$, so it has to be ensured that the network is trained on the boundary too.
+\end{itemize}
+\noindent The authors splits the problem in two similar one, the first having a training set made only by boundary points, the second only by interior points; \footnote{The fundamental aspect is to have ``enough" boundary point. A conceptually simpler solution may be to force the random generator to output an appropriate fraction of boundary points over the total generated, and then to use only one network training on the whole set.}in both cases they use equation \eqref{PoissonDirichlet} RHS to calculate $f,g$ at the random generated points. Then they build up two neural networks, specifically with $3$ layers and $64\times 3$ nodes, $tanh(\cdot)$ activation function and Adam optimizer, to reconstruct the solution $u$ as:
+\begin{equation}\label{sol_kailai}
+u(x,y;w_1,w_2)=A(x,y;w_1)+B(x,y)\cdot N(x,y;w_2)
+\end{equation}
+where \textit{A} is the output of the neural network approximating the boundary condition, \textit{N} the one approximating the solution in the domain, and \textit{B} a function that goes to zero on the boundary; consequently their cost functional has the form:
+\begin{equation}\label{cost_kailai}
+\sum_{i=1}^m\left((g_D)_i - u(x_i,y_i)\right)^2 + \sum_{i=1}^n\left(f(x_i,y_i) - Lu(x_i,y_i)\right)^2
+\end{equation}
+$L$ being the differential operator in strong form.\\
+More precisely their algorithm has two nested loops: for every iteration of the interior network, they perform a full training of the boundary network. Using a $sin(\cdot)sin(\cdot)$ manufactured solution on the unit square with their code, freely available on Github, is possible to recover a very good solution in few hundreds of iterations\footnote{Code and report are here: \cite{Kailai}; notice that it requires Python2 and TensorFlow. Figure \ref{pd1} can be found at the same site.}:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{img/pd1.png}
+	\caption{}\label{pd1}
+\end{figure}
+\noindent However their algorithm does not perform equally good nor in higher dimension neither with ill-behaved solutions, and further developments are needed.\footnote{Further insights and possible reasons are proposed in the next section.}\\
+\newline \noindent A very different approach, but again based on deep learning, has been proposed by \cite{Weinan}. Here it is reported in the case regarding the problem under analysis, in order to show both the largeness of the range of possible DNN based methods for solving PDEs and their common traits, and to point out a very interesting link between this approach, weak formulations and optimal control theory.\\
+In their article the homogeneous Poisson-Dirichlet problem is re-casted analytically in the corresponding optimal control problem, leading to a cost functional of the form:
+\begin{equation}\label{cost_weinan}
+\int_{\Omega}\left(\frac{1}{2} |\nabla u|^2 - uf \right)dx + \beta \int_{\partial\Omega}u^2 d\sigma
+\end{equation}
+which, besides the positive constant $\beta$ and considering homogeneous Dirichlet conditions, turns out to be the exactly the weak form of the \cite{Kailai} cost functional.\\
+The method then proceeds minimizing the cost functional \eqref{cost_weinan} over the set of admissible functions $U_{ad}$, and is here that deep learning comes in. \\
+In fact functions in $U_{ad}$ are re-constructed through neural networks, so moving from an additive-like construction proper of standard approximation theory to a compositional-based one.\\
+At this point the authors apply a quadrature formula to the integral in \eqref{cost_weinan} and then solve the final optimization problem with a proper optimization algorithm.\\\\
+\noindent The algorithm produces good results but, as other approaches based on DNN, has a drawback side: even when the initial problem is convex, the variational problem which is then obtained isn't so, inheriting thus the problem of local minima and saddle points proper of deep learning.
 
 \section{Some more in-depth theoretical results}\label{section2.2}
+In this paragraph some results, obtained mainly by \cite{Jinchao}, are presented, with the aim of giving estimates of the optimal size for a DNN employed to solve PDEs; in particular the results found are useful to ensure that the DNN recovers the same accuracy of the finite element method based on linear base functions.\\
+We recall some FEM notation we use in the following: suppose to have a bounded domain\footnote{In the sense of open and connected.} $\Omega\in\mathbb{R}^d$ ad a conforming mesh or grid $\mathcal{T}_h\subset\Omega$, define moreover $k_h$ as the maximum number of mesh elements neighboring a grid point; then the FE space of grade one is:
+\[ V_h=\{ v \in C_\Omega \text{ s.t. $v$ is linear on every } \tau_k \in \mathcal T_h \} \]
+In other words, the base functions of the grade one FEM are continuous piecewise linear functions, in short CPWL; it is thus natural to proceed into the study using ReLU-DNNs, since the ReLU activation function is a CPWL function and DNNs construct their output as a composition of linear functions and activation functions, giving so a CPWL function as output.\\
+\newline \noindent The two main results are\footnote{These are taken respectively from Theorem 3.1 and Corollary 5.1 of \cite{Jinchao}.}:
+\begin{Theorem}\label{thm3.1}
+	\textit{Given a locally convex finite element grid $\mathcal T_h$ , any linear finite element function in $\mathbb R^d$ with N degrees of freedom can be written as a ReLU-DNN with at most $\lceil log_2 (k_h)\rceil +1$ hidden layers and at most $\mathcal O(k_hN)$ neurons.}
+\end{Theorem}
+\begin{Theorem}\label{corol5.1}
+	\textit{Given a locally convex finite element grid $\mathcal T_h$ , any linear finite element function in $\mathbb R^d$ with N degrees of freedom can be written as a ReLU-DNN with at most $\lceil log_2 (d+1)\rceil$ hidden layers and at most $\mathcal O(d2^{(d+1)k_h}N)$ neurons.}	
+\end{Theorem}
+\noindent A direct comparison of the two theorems shows that although it is possible to achieve linear FEM like accuracy with a relatively shallow network, the deeper one has a considerably smaller size.\\
+To fix the ideas it has been considered $d=2$ and $\Omega$ being the unit circle. Then with a standard triangulation of the domain is:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=10cm]{img/triangulation.png}
+	\caption{}\label{k_h}
+\end{figure}
+\noindent To do an estimate it's thus possible to assume $k_h=6$.\\
+To find a proper value for N we consider the very well-behaved solution:
+\[u_{exact}=e^{-(x^2+y^2)}(x^2+y^2-1)\]
+of the problem \eqref{PoissonDirichlet} obtained computing $f$ as $\Delta u_{exact}$; we then solve the problem different times using the FOSS software \cite{FreeFem++} refining the mesh until a good result is reached.\footnote{Code in \ref{appendix}}. \\
+We obtain a relative $L_2$ error, defined as $err_{L_2} = \frac{||u_{exact}-u_h||_2}{ \frac{1}{2} (||u_{exact}||_2+||u_h||_2) }  $, of $1.65\%$ when using 36 triangles on the border of the domain, as in figure \ref{k_h}, which lead to a $V_h$ space with 137 degrees of freedom:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{img/u2.png}
+	\caption{}\label{u2}
+\end{figure}
+\noindent In the end is possible to conclude that to recover the same result using a ReLU-DNN \textit{at most}:
+\begin{itemize}
+	\item $\lceil log_2 (k_h)\rceil +1=4$ layers and $\mathcal O(k_hN)\simeq 10^3$ total nodes, or
+	\item $\lceil log_2(d+1) \rceil = 2$ layers and $\mathcal O(d2^{(d+1)k_h}N)\simeq 10^8$ total nodes
+\end{itemize}
+are needed, confirming that a deep neural network is computational more convenient that a shallow one\footnote{This is coherent with the fact that the power of the neural networks approach stands in their remarkable capability of approximate non linear functions, which is achieved by means of composition between affinities and non linear activation functions, and the step of activation occurs in the forward propagation as many times as the number of layers.} and, perhaps more importantly, giving a quantitative estimate of this convenience.\\
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -402,7 +479,7 @@ Downloading the repository ``neural-net'' one's find:
 \begin{thebibliography}{10}
 	\addcontentsline{toc}{chapter}{Bibliography}
 	
-	\bibitem[APSC]{PACS} Advanced Programming for Scientific Computing course lectures, Politecnico di Milano, 2019.
+	\bibitem[APSC]{PACS} Advanced Programming for Scientific Computing course lectures and material, Politecnico di Milano, 2019.
 	\bibitem[Andrew NG]{AndrewNG} Professor Andrew NG's Deep Learning MOOC at Coursera, \href{https://www.coursera.org/specializations/deep-learning}{\emph{https://www.coursera.org/specializations/deep-learning}}, consulted in 2019.
 	\bibitem[Boost]{boost} Boost C++ libraries, \href{https://www.boost.org/}{\emph{https://www.boost.org/}}
 	\bibitem[cppreference.com]{cppreference} An online reference of the C++ language, \href{https://en.cppreference.com/w/cpp}{\emph{https://en.cppreference.com/w/cpp}}
@@ -416,7 +493,9 @@ Downloading the repository ``neural-net'' one's find:
 	\bibitem[Kailai et al.]{Kailai} Kailai Xu, Bella Shi, Shuyi Yin, code and technical report of the project for the course CS230 \emph{Deep Learning, Winter 2018, Stanford University}, found at \href{https://github.com/kailaix/nnpde}{\emph{https://github.com/kailaix/nnpde}}
 	\bibitem[Kingma-LeiBa]{Kingma} Diederik P. Kingma, Jimmy Lei Ba,\emph{Adam: a method for stochastic optimization}, 2015, found at
 	\href{https://arxiv.org/abs/1412.6980}{\emph{https://arxiv.org/abs/1412.6980}} 
+	\bibitem[Lagaris et al.]{Lagaris} I.E. Lagaris, A. Likas and D.I. Fotiadis: \emph{Artificial Neural Networks for Solving Ordinary and Partial Differential Equations}, 1997, found at \href{https://arxiv.org/abs/physics/9705023}{\emph{https://arxiv.org/abs/physics/9705023}}
 	\bibitem[Make]{make} GNU Make doc at \href{https://www.gnu.org/software/make/manual}{\emph{https://www.gnu.org/software/make/manual}}
+	\bibitem[Sirignano-Spiliopoulos]{Sirignano}Justin Sirignano, Konstantinos Spiliopoulos: \emph{DGM: A deep learning algorithm for solving partial differential equations}, 2018, found at \href{https://arxiv.org/abs/1708.07469}{\emph{https://arxiv.org/abs/1708.07469}}
 	\bibitem[Weinan-Bing]{Weinan} Weinan E, Bing Yu \emph{The Deep Ritz method: A deep learning-based numerical algorithm for solving variational problems}, 2017, found at \href{https://arxiv.org/abs/1710.00211}{\emph{https://arxiv.org/abs/1710.00211}}
 	
 \end{thebibliography}
