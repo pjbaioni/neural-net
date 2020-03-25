@@ -29,7 +29,7 @@ and to compile write_set.cpp:
  - type g++ -std=c++14 -I$mkEigenInc -I./../../include/ write_set.cpp
  
 Code has been developed mainly under Debian 9.9 using the modules of the
-APSC course, academic year 18-19; some test under a Lubuntu 18.04 LTS
+APSC course, academic year 18-19; some tests under a Lubuntu 18.04 LTS
 virtual machine running the a.y. 19-20 modules have shown some differences
 that are being investigated.
 In both cases gnuplot is required (tested versions: 5.0, 5.2), but numerical 
