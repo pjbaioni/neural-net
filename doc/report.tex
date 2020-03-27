@@ -519,8 +519,8 @@ NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 	W.reserve(nlayers-1);
 	b.reserve(nlayers-1);
 	for(size_t l=0; l<nlayers-1; ++l){
-		W.push_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	
-		b.push_back(VectorXd(nnodes(l+1)));
+		W.emplace_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	
+		b.emplace_back(VectorXd(nnodes(l+1)));
 	}
 
 	L.resize(nlayers);	
@@ -534,7 +534,8 @@ NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 	b_optimizer.reserve(nlayers-1);
 }
 \end{lstlisting}
-The constructor initialize every member, in order of declaration, starting from the architecture parameters in the initializer list. As already explained {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between zero and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random, as requested by the chapter \ref{chapter1} argumentation, we should use them and guarantee effective randomness including ``real entropy'' in the seed, for example in this way:
+The constructor initialize every member, in order of declaration. In all methods whenever possible efficiency has been considered: for example here {\ttfamily nlayers} and {\ttfamily nnodes} are initialized in the member initializer list, and {\ttfamily std:: vector<T>::reserve()} followed by {\ttfamily std::vector<T>::emplace\_back()} is preferred over {\ttfamily std::vector<T>::push\_back()}.\\
+As already explained {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between zero and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random, as requested by the chapter \ref{chapter1} argumentation, we should use them and guarantee effective randomness including ``real entropy'' in the seed, for example in this way:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 size_t sd = chrono::system_clock::now().time_since_epoch().count();
 default_random_engine gen(sd);
@@ -545,7 +546,7 @@ for(size_t i=0; i<W.rows(); ++i)
 \end{lstlisting}
 However, the Eigen default random function has shown very good performances, so it has been preferred due to its simplicity.\\
 It's worth noting that only {\ttfamily W}, {\ttfamily b} and their gradients can be fully initialized, since it has been chosen to take the input data, whatever it is, training or test data, chosen optimizer..., only when it is really used. Consequently variables like the number of data, which is one of the dimension of the {\ttfamily A[l], L[l]} matrices, is not known at this moment.\\
-In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated using {\ttfamily std::vector<T>::reserve()} or {\ttfamily resize()}; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (scomposed in different frames for clarity):
+In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (scomposed in different frames for clarity):
 \begin{lstlisting}[frame=single, showstringspaces=false]
 void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements, const bool verbose){                     
 	///////////////////

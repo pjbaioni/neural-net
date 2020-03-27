@@ -19,10 +19,10 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 		b.emplace_back(VectorXd(nnodes(l+1)));
 	}
 	
-	L.resize(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
-	A.resize(nlayers-1); // bcs A will be out of range
+	L.reserve(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
+	A.reserve(nlayers-1); // bcs A will be out of range
 	
-	B.resize(nlayers-1);	
+	B.reserve(nlayers-1);	
 	dW=W; //1) this require that dW[l] and W[l] refer to the same l, same for b
 	db=b; //2) first value isn't important here, since it would be overwritten anyway 
 	
