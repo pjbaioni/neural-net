@@ -145,7 +145,7 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 			/////////////////////////
 			//  Convergence check  //
 			/////////////////////////
-			//Output the current cost (a --verbose option could be useful)
+			//Output the current cost
 			//and check if convergence is reached:
 			if( verbose && (t%25==0) ){
 				cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";

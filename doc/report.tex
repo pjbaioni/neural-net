@@ -523,10 +523,10 @@ NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 		b.emplace_back(VectorXd(nnodes(l+1)));
 	}
 
-	L.resize(nlayers);	
-	A.resize(nlayers-1);
+	L.reserve(nlayers);	
+	A.reserve(nlayers-1);
 
-	B.resize(nlayers-1);	
+	B.reserve(nlayers-1);	
 	dW=W; 
 	db=b; 
 
@@ -571,8 +571,138 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 \end{lstlisting}
 Since the input datasets have to be read somehow, and since the ``layer structure'' was already ready, the first layer has been reserved for reading only. This is of course a personal choice, motivated basically from the fact that it's easy and works good. A more elaborate one could have been to let the first layer weight the $(x,y)$ couples received during training from the dataset, and thus having e.g. {\ttfamily W[0]} an {\ttfamily ndata x nnodes[0]} matrix, but, being {\ttfamily ndata} quite large, this introduces by sure some overhead.\\
 Since in the present version the first layer only reads the input, it don't need weights, biases and gradients at all, and for this reason their vectors have one component less.\\
-A different discussion must be made with regards to the activated outputs variable {\ttfamily A}, which again has just {\ttfamily nlayers-1} elements: since we want our output to be a function, in the sense of mathematical analysis, with no particular requirements, we cannot in general activate the last output, because if we would do so for example with a $tanh(\cdot)$, we would be able to reconstruct only $tanh(\cdot)$s.\\
-
+A different discussion must be made with regards to the activated outputs variable {\ttfamily A}, which again has just {\ttfamily nlayers-1} elements, but for another reason, less subjective: since we want our output to be a function, in the sense of mathematical analysis, with no particular requirements, we cannot in general activate the last output, because if we would do so for example with a $tanh(\cdot)$, we would be able to reconstruct only $tanh(\cdot)$s.\\
+The ``Init'' phase of the {\ttfamily train()} function finishes with the initialization of the optimizers, which is made through a switch-case construct:
+\begin{lstlisting}[frame=single]
+//Optimizers:
+string W_opt_name, b_opt_name;
+switch(W_opt){
+	case 0:
+		for(size_t l=0; l<nlayers-1; ++l)
+			W_optimizer.emplace_back(make_shared<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+		W_opt_name = "GradientDescent";
+		break;
+	case 1:
+		for(size_t l=0; l<nlayers-1; ++l)
+			W_optimizer.emplace_back(make_shared<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+		W_opt_name = "GDwithMomentum";
+		break;
+	case 2:
+		for(size_t l=0; l<nlayers-1; ++l)
+			W_optimizer.emplace_back(make_shared<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+		W_opt_name = "RMSprop";
+		break;
+	case 3:
+		for(size_t l=0; l<nlayers-1; ++l)
+			W_optimizer.emplace_back(make_shared<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+		W_opt_name = "Adam";
+		break;
+	default:
+		for(size_t l=0; l<nlayers-1; ++l)
+			W_optimizer.emplace_back(make_shared<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+		W_opt_name = "AdaMax";
+		break;
+}		
+	
+switch(b_opt){
+	case 0:
+		for(size_t l=0; l<nlayers-1; ++l)
+			b_optimizer.emplace_back(make_shared<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
+		b_opt_name = "GradientDescent";
+		break;
+	case 1:
+		for(size_t l=0; l<nlayers-1; ++l)
+			b_optimizer.emplace_back(make_shared<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
+		b_opt_name = "GDwithMomentum";
+		break;
+	case 2:
+		for(size_t l=0; l<nlayers-1; ++l)
+			b_optimizer.emplace_back(make_shared<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
+		b_opt_name = "RMSprop";
+		break;
+	default:
+		for(size_t l=0; l<nlayers-1; ++l)
+			b_optimizer.emplace_back(make_shared<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
+		b_opt_name = "Adam";
+	break;
+	case 4:
+		for(size_t l=0; l<nlayers-1; ++l)
+			b_optimizer.emplace_back(make_shared<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
+		b_opt_name = "AdaMax";
+		break;
+}	
+\end{lstlisting}
+Notwithstanding the possibility to choose different optimizer for {\ttfamily W} and {\ttfamily b} was foreseen only to investigate the relative importance of the two parameters, preliminary tests done trying to predict a wavepacket-like function has shown that the best compromise between accuracy and number of iteration is reached when using AdaMax for {\ttfamily W} and Adam for {\ttfamily b}, so these have become the default.\\
+The {\ttfamily train()} function implements a piecewise constant learning rate decay, obtained in this way:
+\begin{lstlisting}[frame=single]
+///////////////////
+//Training loops //
+///////////////////
+double old_cost{numeric_limits<double>::infinity()};
+double cost{-1.}, err{old_cost};
+niter=niter/nrefinements;
+vector<size_t> backup_t(nrefinements);
+	
+for(size_t ref=1; ref<=nrefinements; ++ref){
+	for(size_t t=1; t<=niter; ++t){
+		//do one forward propagation
+		//eventually output the cost
+		//do one backprop
+	}
+//update refinement parameters for the next training loop:
+alpha=alpha/10;
+tolerance=tolerance/((10-2*ref)*10);
+} 
+\end{lstlisting} 
+Learning rate decay has been implemented because it turned out to be very important to obtain acceptable accuracy. This implementation has the pros of being automatic, very simple and effective enough, but, since everything in DNN programming is very problem dependent and has to be tuned properly case by case, better results can be obtained miming this procedure directly in the main, when training the net. Indeed is enough to don't pass the number of refinements as argument to turn off the automatic learning rate decay, and then implement it manually with subsequent calls to the training function. Guidelines to do it are presented in chapter \ref{chapter4}.\\
+The forward propagation step that take place in the above inner loop follows the general theory:
+\begin{lstlisting}[frame=single]
+/////////////////////////
+// Forward propagation //
+/////////////////////////
+for(size_t l=1; l<nlayers-1; ++l){
+	//Summing the column vector b (nnodes(l+1)x1) to each 
+	//column of A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)) :
+	L[l] = ( A[l-1]*W[l-1] ).rowwise() + b[l-1].transpose();
+	A[l] = tanh( L[l].array() );
+}	
+//The final output shouldn't be activated, otherwise it will be necessarly a tanh:
+L[nlayers-1] = ( A[nlayers-2]*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
+	
+//Computing cost as the L2 distance: (divided by 2, for ease in later differentiation)
+cost = .5 * (L[nlayers-1] - Data.col(1)).array().square().matrix().sum();
+\end{lstlisting}
+As evident, the code strongly relies on the Eigen built-in operations and function; in particular at line 7 and 11 of the above code a Python-like \textit{broadcasting} is implemented. An advantage of using Eigen is the ease of switching between matrix like operations, like the products in the same lines of code, to element wise operations, invoked with a {\ttfamily .array()}; moreover, when optimization is activated, such conversions, as well as transpositions and so on, are implemented so that they are costless from a computational point of view.\\
+Then a convergence check and, eventually, an output to std::output is performed:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+/////////////////////////
+//  Convergence check  //
+/////////////////////////
+//Output the current cost
+//and check if convergence is reached:
+if( verbose && (t%25==0) ){
+	cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
+	err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
+	if(err<tolerance){
+		backup_t.push_back(t);
+		break;
+	}
+	else
+		old_cost = cost;
+}
+\end{lstlisting}
+Draft:\\
+Backprop: at the beginning was from right to left to follow theory, but then i've turned it from left to right and just reverted the for condition, because it is very more convenient, see commit for details; moreover overloaded call operator was chosen before polymorphism because it could be used in a less ugly way than now, with no parentheses and dereference operator. Very few words on chain rule too. Gradient descent, which was used at the beginning, survive here as a comment for documentation purposes: it shows what whatever optimizer morally do.\\
+Final output: few word on accumulate, i.e. it is used to print the total number of iterations, since it is reset every time a refinement is done.
+I could have written something like: if(nrefinements==1) do certain things, else do others more, e.g. this step or having backup\_t.
+However i've preferred to avoid this, since every if introduce a decision tree in the code, and thus some overhead, and i've written the code in such a way that it just works even with nrefinements==1. Of course in this case backup\_t is created for no reason, but i've preferred code brevity and execution time over memory saving.\\
+Test: the test function performs just one forward propagation, with two big differences wrt train:\\
+ - it doesn't store data(i.e. it uses only 2 matrices and it overwrites them, not 2 vectors of matrices), since it wouldn't use it anyway (when is for free, i save memory), \\
+ - and thus it returns the result in the end\\
+One could ask why don't use the already stored A,L anyway, so to don't even allocate the 2 matrices. In principle it could be done actually, but it would require more coding: A[l],L[l] have to be resized for every l, since in general ntraininingdata!=ntestdata, while i've always tryed to keep the code as simple as possible; by the way, that approach would introduce a little overhead too.
+\newline\noindent Final remarks: as can be seen, the code, despite being 1d, can be extended to a n-d interpolator conceptually with no effort (of course, this potentially introduces a lot of choices, and so of time consuming new parameters tuning). The very simplest way it would be to make the first layer have a W (and a b, and so even backprop variables), basically to do a weighted average of x1,x2,x3...xn, in such a way that the second layer takes just an 1d x as usual (x=w1x1+w2x2...). In this way we are giving different (or equal, if we prefer), importance to every dimension. This method includes the already implemented one as a special case with n=1 and W=1.
+Of course even in this case it would be possible to give different importance even to the single tuples of coordinates, as above we've said we don't do since results are already good, in 1d, as they are.
+Moreover that ``squeezing'' from nd to 1d can be performed later on, in another layer. This choice by sure would introduce more overhead, but may result in less training iterations, since in this way we keep the dimensionality alive for more time.BUT  the more one enrich the code, and exponentially more tuning is needed, because not only this new choices have to be tested, but even their combination with the already existing hyper-parameters. It's thus clear that that would go over the aims of the present project.
 
 
 \section{The Optimizers class templates}\label{section3.3}
