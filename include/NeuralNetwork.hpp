@@ -44,7 +44,7 @@ public:
 	NeuralNetwork(const VectorXs &);
 	
 	//Training function:
-	void train(const Eigen::MatrixXd & Data, double alpha, std::size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements=1, const bool verbose=false);
+	void train(const Eigen::MatrixXd & Data, double alpha, std::size_t niter, double tolerance, const std::size_t W_opt, const std::size_t b_opt, const std::size_t nrefinements=1, const bool verbose=false);
 	
 	//Test function:
 	std::pair<Eigen::VectorXd,double> test(const Eigen::MatrixXd & Data);

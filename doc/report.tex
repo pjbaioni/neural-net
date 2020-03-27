@@ -431,22 +431,70 @@ are needed, confirming that a deep neural network is computational more convenie
 \chapter{Implementation of neural-net}\label{chapter3}
 \setcounter{figure}{8}
 In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given.\\
-The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the author's page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\\
+The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the web page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\\
 In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the README.md file and in chapter \ref{chapter4}, where it is shown how to build the program and run an example. 
 
 \section{Directory tree}
-Downloading the repository ``neural-net'' one's find:
+Downloading the repository ``neural-net'' one finds:
 \begin{itemize}
 	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, \cite{gnuplot} scripts in .gnu format, and their graphical output in .png format;
-	\item the \textit{doc} folder, containing this documentation in .tex and .pdf format, plus the \textit{img} sub-folder where there are the images included by the TeX file;
-	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters file and command line option, \textit{gnuplot-iostream.hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork \textbf{class}, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as \textbf{class templates};
+	\item the \textit{doc} folder, containing this documentation in .tex and .pdf format, plus the \textit{img} sub-folder where the images included by the TeX file are stored;
+	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters file and command line options, \textit{gnuplot-iostream.hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork \textbf{class}, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as \textbf{class templates};
 	\item the \textit{src} folder, which contain the source files main.cpp, NeuralNetwork.cpp, where the NeuralNetwork class member functions are defined, the Makefile which can be used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets is placed;
 	\item the COPYING file, a plain text file containing copying informations and licenses;
 	\item the README.md file, a markdown file containing basic informations;
-	\item the (hidden) \textit{.gitignore} file, that trace the file extensions which are not being pushed to the remote, mainly compilation files, executables and comments file.
+	\item the (hidden) \textit{.gitignore} file, that traces the file extensions which are not being pushed to the remote, mainly compilation files, executables and comments file.
 \end{itemize}
-\noindent Despite the different extensions, every non-png nor non-pdf file can be opened by any text editor.
+\noindent Despite their different extensions, every non-png nor non-pdf file can be opened by any text editor.
 \section{The Neural Network class}
+The class NeuralNetwork implements a computational efficient design of a deep neural network (DNN).\\
+As seen in chapter \ref{chapter1}, to which we refer for the names of the principal quantities as for the justification of the main algorithms, a DNN is composed by different layers, each of which is composed by a (possibly) different number of nodes. At the beginning of the present project, this hierarchical structure naturally inherent to DNNs led to the idea of developing three classes, NeuralNetwork, Layer and Node. For reason that will appear clearer later on\footnote{Basically, because first, internal and last layer performs slightly different works.}, Layer would have been an abstract class, from witch the child classes InputLayer, HiddenLayer and OutputLayer would have inherited. That approach doubtless had the pro of adhering to the abstract model of a DNN, from the more general structure to the really low-level computations, but initial tests have shown that it wasn't so competitive from a computational efficiency point of view, besides being more complex than strictly necessary.\\
+The final choice has been to ``vectorize'' the computations as much as possible, grouping together all the operations performed by nodes in each layer by means of matrices.
+Of course this passage, which can be considered computationally mandatory in machine learning typical languages such as Python, hasn't brought efficiency by itself, being C++ a compiled language, but has allowed to rely on strongly optimized well known linear algebra libraries, which have made the difference. In particular the choice is fallen on the \cite{eigen} template library, for its immediate compatibility with C++ and its ease of use and linking with respect to other classical libraries such as Lapack, while maintaining a very good performance.
+Having reached this point, and having loose somehow an eye-apparent evident sight on each node operations, keeping the original design of a neural network class composed by three different specifications of the layer class has appeared senseless, and thus it has been decided to simplify the code making the neural network class hold just vectors of the quantities that characterized every layer. \\
+The choices made have thus led to a structure as the following:
+\begin{lstlisting}[frame=single, name=neuralnet, showstringspaces=false, basicstyle=\fontsize{9}{11}\ttfamily,]
+class NeuralNetwork{
+
+private:
+
+	//Hyperparameters:
+	size_t nlayers;
+	VectorXs nnodes;		
+
+	//Parameters to be optimized:
+	vector<MatrixXd> W;	
+	vector<VectorXd> b;		
+
+	//Forward propagation outputs:
+	vector<MatrixXd> L; 	
+	vector<MatrixXd> A;		
+
+	//Back propagation gradients:
+	vector<MatrixXd> B;		
+	vector<MatrixXd> dW;
+	vector<VectorXd> db;
+
+	//Optimizers:
+	vector<shared_ptr<GradientDescent<MatrixXd>>> W_optimizer;
+	vector<shared_ptr<GradientDescent<VectorXd>>> b_optimizer;
+
+public:
+
+	//Constructor:
+	NeuralNetwork(const VectorXs &);
+	
+	//Training function:
+	void train(const MatrixXd & Data, double alpha, size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements=1, const bool verbose=false);
+	
+	//Test function:
+	pair<VectorXd,double> test(const MatrixXd & Data);
+	
+};
+
+\end{lstlisting}
+\noindent Now i write here
+
 \section{The Optimizers class templates}
 \section{Write\_set and data}
 \section{The main}
