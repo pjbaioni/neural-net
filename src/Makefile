@@ -6,7 +6,7 @@ EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:%.cpp=%.o)
-VERBOSE=
+OPTIONS=minimal_output
 
 main.o: $(HEADERS) $(SRCS)
 NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
@@ -29,7 +29,7 @@ distclean: clean
 	$(RM) $(EXE)
 
 run:
-	./$(EXE) $(VERBOSE)
+	./$(EXE) $(OPTIONS)
 
 help:
 	./$(EXE) "--help"

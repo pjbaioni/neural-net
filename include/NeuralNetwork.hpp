@@ -17,7 +17,7 @@ typedef Eigen::Matrix< std::size_t, Eigen::Dynamic, 1 > 	VectorXs;
 class NeuralNetwork{
 private:
 
-	//Hyperparameters:
+	//Architecture hyperparameters:
 	std::size_t nlayers;							//total number of layers of the net (hidden+2)
 	VectorXs nnodes;									//nnodes[l]=number of nodes of the l-th layer
 	

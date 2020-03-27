@@ -102,7 +102,7 @@ int main(int argc, char** argv){
 	
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
-	write_vector(prevision_filename,yhat)<<endl;
+	write_vector(prevision_filename,yhat)<<"\n"<<endl;
 	
 	Gnuplot gp;
 	//first way:
@@ -114,7 +114,7 @@ int main(int argc, char** argv){
 	//plot:
 	gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
   "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prev))<<
-  "w lp lw 1.5 title 'Prevision'"<<std::endl;
+  "w lp lw 1.5 title 'Prevision'";
 	
 	return 0;
 } 

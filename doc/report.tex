@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage{setspace}
+\usepackage{setspace,enumerate}
 \usepackage{amsmath,amssymb,amsthm,mathtools,cases,bm}
 
 \theoremstyle{definition}
@@ -430,7 +430,7 @@ are needed, confirming that a deep neural network is computational more convenie
 
 \chapter{Implementation of neural-net}\label{chapter3}
 \setcounter{figure}{8}
-In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given.\\
+In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given. As just shown in chapter \ref{chapter2}, what different DNN based PDE solvers have in common is their relying on whats turn out to be DNN's numerical analysis strongest point: their remarkably capability of reconstructing function, which is used to construct the basis of the approximation spaces. For this reason it has been decided to start writing an interpolator based on DNNs; different possible expansions are being investigated as well.\\
 The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the web page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\\
 In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the README.md file and in chapter \ref{chapter4}, where it is shown how to build the program and run an example. 
 
@@ -453,12 +453,13 @@ The final choice has been to ``vectorize'' the computations as much as possible,
 Of course this passage, which can be considered computationally mandatory in machine learning typical languages such as Python, hasn't brought efficiency by itself, being C++ a compiled language, but has allowed to rely on strongly optimized well known linear algebra libraries, which have made the difference. In particular the choice is fallen on the \cite{eigen} template library, for its immediate compatibility with C++ and its ease of use and linking with respect to other classical libraries such as Lapack, while maintaining a very good performance.
 Having reached this point, and having loose somehow an eye-apparent evident sight on each node operations, keeping the original design of a neural network class composed by three different specifications of the layer class has appeared senseless, and thus it has been decided to simplify the code making the neural network class hold just vectors of the quantities that characterized every layer. \\
 The choices made have thus led to a structure as the following:
-\begin{lstlisting}[frame=single, name=neuralnet, showstringspaces=false, basicstyle=\fontsize{9}{11}\ttfamily,]
+%basicstyle=\fontsize{9}{11}\ttfamily
+\begin{lstlisting}[frame=single, name=neuralnet, showstringspaces=false]
 class NeuralNetwork{
 
 private:
 
-	//Hyperparameters:
+	//Architecture hyperparameters:
 	size_t nlayers;
 	VectorXs nnodes;		
 
@@ -493,9 +494,87 @@ public:
 };
 
 \end{lstlisting}
-\noindent Now i write here
+\noindent Note that here and in most of the following codes all preprocessor's directives as includes and header guards, as well as scope operators, typedefs and comments have been omitted for brevity.\footnote{See NeuralNetwork.hpp for the complete version.}\\
+So the class NeuralNetwork hold basically four kind of data members: 
+\begin{enumerate}[(i)]
+	\item\label{item:i} architecture (hyper)parameters, like {\ttfamily nlayers} and {\ttfamily nnodes}, which specify respectively the total number of layers and the number of nodes for each layer, {\ttfamily VectorXs} being a {\ttfamily typedef} for an Eigen dynamic vector holding {\ttfamily std::size\_t}s, miming the one of {\ttfamily Eigen::VectorXd};
+	\item\label{item:ii} the parameters to be optimized, namely {\ttfamily W} and {\ttfamily b}, that has to be somehow a vector of vector, i.e. not a matrix, since the number of nodes varies for each layer;
+	\item\label{item:iii} the \textit{propagation members} {\ttfamily L}, {\ttfamily A}, {\ttfamily B}, {\ttfamily dW} and {\ttfamily db}, that holds the data computed at every cycle of forward and backward propagation;
+	\item \label{item:iv} the optimizers for {\ttfamily W} and {\ttfamily b}, which hold a (smart) pointer to the base class of the Optimizers class hierarchy.\footnote{Optimizers.hpp is illustrated in section \ref{section3.3}}
+\end{enumerate}
+For what concerns the (\ref{item:i}) group, {\ttfamily nnodes} is the \textit{true} parameter, indeed it is the only argument that the constructor takes, while {\ttfamily nlayers} is stored for convenience, since it is used very often in for loops in the member functions, but could be removed. In general, it has been chosen to use {\ttfamily std::size\_t} every time an unsigned was needed, to adopt a standard that would fit every necessity.\\
+As explained above, {\ttfamily W} and {\ttfamily b} are the vectorized version of \ref{chapter1} parameters: if we call {\ttfamily l} the generic layer, then {\ttfamily W[l]} is an {\ttfamily nnodes(l)}$\times${\ttfamily nnodes(l+1)} matrix, while {\ttfamily b[l]} is a {\ttfamily nnodes(l+1)} column vector, as in Figure \ref{neuralnet}.\\
+A similar comment holds for the propagation members (\ref{item:iii}), with two observations:
+\begin{itemize}
+	\item forward members, {\ttfamily L} and {\ttfamily A}, have been chosen to be the most general possible, even if for the problems for which the program has been designed the first one and the last one will be always column vectors, and not true matrices;
+	\item backward members, {\ttfamily B} (which stands for ``backward''), {\ttfamily dW} and {\ttfamily db}, aren't strictly needed, like the previous {\ttfamily nlayers}, but simplify significantly the subsequent code.
+\end{itemize}
+The (\ref{item:iv}) group has been introduced later, indeed simple algorithms like Gradient Descent can be applied directly during the training phase, i.e. can be written directly by hand in a {\ttfamily training()} function. However it turns out that most finer optimizers need to store estimators of the gradients, and this estimators have to be updated at every training iteration, thus the need for storing them in the neural net.\\
+Since, as it will be seen in the following section, optimizers have been implemented applying inheritance, here we store smart pointers to the base class, instead of the proper optimizer itself, in order to be able to use polymorphism later and to let the user choose the desired optimizer runtime, when calling the training function.\\
+\newline \noindent
+Having introduced the data members, consider the member functions:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 
-\section{The Optimizers class templates}
+	W.reserve(nlayers-1);
+	b.reserve(nlayers-1);
+	for(size_t l=0; l<nlayers-1; ++l){
+		W.push_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	
+		b.push_back(VectorXd(nnodes(l+1)));
+	}
+
+	L.resize(nlayers);	
+	A.resize(nlayers-1);
+
+	B.resize(nlayers-1);	
+	dW=W; 
+	db=b; 
+
+	W_optimizer.reserve(nlayers-1);
+	b_optimizer.reserve(nlayers-1);
+}
+\end{lstlisting}
+The constructor initialize every member, in order of declaration, starting from the architecture parameters in the initializer list. As already explained {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between zero and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random, as requested by the chapter \ref{chapter1} argumentation, we should use them and guarantee effective randomness including ``real entropy'' in the seed, for example in this way:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+size_t sd = chrono::system_clock::now().time_since_epoch().count();
+default_random_engine gen(sd);
+uniform_distribution<double> random_value(0,1);
+for(size_t i=0; i<W.rows(); ++i)
+	for(size_t j=0; j<W.cols(); ++j)
+		W(i,j) = random_value(gen);
+\end{lstlisting}
+However, the Eigen default random function has shown very good performances, so it has been preferred due to its simplicity.\\
+It's worth noting that only {\ttfamily W}, {\ttfamily b} and their gradients can be fully initialized, since it has been chosen to take the input data, whatever it is, training or test data, chosen optimizer..., only when it is really used. Consequently variables like the number of data, which is one of the dimension of the {\ttfamily A[l], L[l]} matrices, is not known at this moment.\\
+In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated using {\ttfamily std::vector<T>::reserve()} or {\ttfamily resize()}; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (scomposed in different frames for clarity):
+\begin{lstlisting}[frame=single, showstringspaces=false]
+void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements, const bool verbose){                     
+	///////////////////
+	//      Init     //
+	///////////////////
+
+	size_t ndata=Data.rows();
+
+	//L has nlayers components:
+	for(size_t l=0; l<nlayers;++l)
+		L.emplace_back(ndata,nnodes(l));
+	//A hasn't the last one:
+	for(size_t l=0; l<nlayers-1;++l)
+		A.emplace_back(ndata,nnodes(l));
+	//B hasn't the first one:
+	for(size_t l=1; l<nlayers;++l)
+		B.emplace_back(ndata,nnodes(l));
+
+	//First layer only reads the input:
+	L[0]=Data.col(0); 
+	A[0]=L[0];	
+\end{lstlisting}
+Since the input datasets have to be read somehow, and since the ``layer structure'' was already ready, the first layer has been reserved for reading only. This is of course a personal choice, motivated basically from the fact that it's easy and works good. A more elaborate one could have been to let the first layer weight the $(x,y)$ couples received during training from the dataset, and thus having e.g. {\ttfamily W[0]} an {\ttfamily ndata x nnodes[0]} matrix, but, being {\ttfamily ndata} quite large, this introduces by sure some overhead.\\
+Since in the present version the first layer only reads the input, it don't need weights, biases and gradients at all, and for this reason their vectors have one component less.\\
+A different discussion must be made with regards to the activated outputs variable {\ttfamily A}, which again has just {\ttfamily nlayers-1} elements: since we want our output to be a function, in the sense of mathematical analysis, with no particular requirements, we cannot in general activate the last output, because if we would do so for example with a $tanh(\cdot)$, we would be able to reconstruct only $tanh(\cdot)$s.\\
+
+
+
+\section{The Optimizers class templates}\label{section3.3}
 \section{Write\_set and data}
 \section{The main}
 

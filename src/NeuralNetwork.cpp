@@ -15,8 +15,8 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 	W.reserve(nlayers-1);
 	b.reserve(nlayers-1);
 	for(size_t l=0; l<nlayers-1; ++l){
-		W.push_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	//W MUST be random initialized, see doc
-		b.push_back(VectorXd(nnodes(l+1)));
+		W.emplace_back(MatrixXd::Random(nnodes(l),nnodes(l+1)));	//W MUST be random initialized, see doc
+		b.emplace_back(VectorXd(nnodes(l+1)));
 	}
 	
 	L.resize(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
