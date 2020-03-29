@@ -75,7 +75,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter*{Introduction}
+\chapter*{Introduction}\label{introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
 The numerical solution of partial derivative equations (PDEs) plays a fundamental role in applied mathematics, science and engineering. \\
@@ -691,18 +691,93 @@ if( verbose && (t%25==0) ){
 		old_cost = cost;
 }
 \end{lstlisting}
-Draft:\\
-Backprop: at the beginning was from right to left to follow theory, but then i've turned it from left to right and just reverted the for condition, because it is very more convenient, see commit for details; moreover overloaded call operator was chosen before polymorphism because it could be used in a less ugly way than now, with no parentheses and dereference operator. Very few words on chain rule too. Gradient descent, which was used at the beginning, survive here as a comment for documentation purposes: it shows what whatever optimizer morally do.\\
-Final output: few word on accumulate, i.e. it is used to print the total number of iterations, since it is reset every time a refinement is done.
-I could have written something like: if(nrefinements==1) do certain things, else do others more, e.g. this step or having backup\_t.
-However i've preferred to avoid this, since every if introduce a decision tree in the code, and thus some overhead, and i've written the code in such a way that it just works even with nrefinements==1. Of course in this case backup\_t is created for no reason, but i've preferred code brevity and execution time over memory saving.\\
-Test: the test function performs just one forward propagation, with two big differences wrt train:\\
- - it doesn't store data(i.e. it uses only 2 matrices and it overwrites them, not 2 vectors of matrices), since it wouldn't use it anyway (when is for free, i save memory), \\
- - and thus it returns the result in the end\\
-One could ask why don't use the already stored A,L anyway, so to don't even allocate the 2 matrices. In principle it could be done actually, but it would require more coding: A[l],L[l] have to be resized for every l, since in general ntraininingdata!=ntestdata, while i've always tryed to keep the code as simple as possible; by the way, that approach would introduce a little overhead too.
-\newline\noindent Final remarks: as can be seen, the code, despite being 1d, can be extended to a n-d interpolator conceptually with no effort (of course, this potentially introduces a lot of choices, and so of time consuming new parameters tuning). The very simplest way it would be to make the first layer have a W (and a b, and so even backprop variables), basically to do a weighted average of x1,x2,x3...xn, in such a way that the second layer takes just an 1d x as usual (x=w1x1+w2x2...). In this way we are giving different (or equal, if we prefer), importance to every dimension. This method includes the already implemented one as a special case with n=1 and W=1.
-Of course even in this case it would be possible to give different importance even to the single tuples of coordinates, as above we've said we don't do since results are already good, in 1d, as they are.
-Moreover that ``squeezing'' from nd to 1d can be performed later on, in another layer. This choice by sure would introduce more overhead, but may result in less training iterations, since in this way we keep the dimensionality alive for more time.BUT  the more one enrich the code, and exponentially more tuning is needed, because not only this new choices have to be tested, but even their combination with the already existing hyper-parameters. It's thus clear that that would go over the aims of the present project.
+Just after it the backward propagation phase begins. In the initial stages of the project, the backprop algorithm was designed following strictly the standard theory, with vectors of gradients starting from the right of the net to the left, e.g. {\ttfamily dW[0]} held the gradient of the cost functional w.r.t. the weights of the last layer.\footnote{See commit 6432f1d517205f3920ab1b77bf224735fbeec819} That designed showed soon some inconveniences: in the update phase we had e.g. {\ttfamily dW[l]} and {\ttfamily W[l]} referring to different layers, and an ad hoc construction for the gradients was needed too, instead of the simpler {\ttfamily dW=W}; for this reason it has been decided soon to ``overturn'' the backprop section while keeping its natural sequence reverting its for loop condition; that's the final code:
+\begin{lstlisting}[frame=single]
+	//////////////////////////
+	// Backward propagation //
+	//////////////////////////
+	//Compute B as d(cost)/d(output): 
+	//(no tanh now because it's the last layer)
+	B[nlayers-2] = L[nlayers-1] - Data.col(1);	
+	for(size_t l=nlayers-2; l>0; --l){
+		//Compute gradient of cost wrt W:
+		dW[l] = ( L[l].transpose() )*B[l];
+		//Update W:
+		//W[l] = W[l] - alpha*dW[l];
+		(*W_optimizer[l])(W[l],dW[l],alpha,t);
+		//Compute gradient of cost wrt b:
+		db[l] = B[l].transpose().rowwise().sum();
+		//Update b:
+		//b[l] = b[l] - alpha*db[l];
+		(*b_optimizer[l])(b[l],db[l],alpha,t);
+		//Compute previous B: 
+		//(now there is tanh, and dx[tanh(x)]=1-x^2)
+		B[l-1] = (1. - (A[l].array().square())) * ( (B[l]* (W[l].transpose()) ).array() );
+	}
+	//Updating parameters of the first hidden layer:
+	dW[0] = ( L[0].transpose() )*B[0];
+	W[0] = W[0] - alpha*dW[0];
+	db[0] = B[0].transpose().rowwise().sum();
+	b[0] = b[0] - alpha*db[0];
+
+}//End of the training loop
+\end{lstlisting}
+\noindent As can bee seen {\ttfamily B[l]} is a support variable, that holds the derivative of the cost w.r.t to the output of the layer {\ttfamily l}. This is useful since the gradients of the cost w.r.t the weights and the biases are computed by means of the chain rule:
+\begin{equation*}
+	\begin{cases}
+	B[l] := \frac{dC}{dY[l]}\\ 
+	\frac{dC}{dW[l]} = \frac{dC}{dY[l]} \cdot \frac{dY[l]}{dW[l]} \\
+	\frac{dC}{db[l]} = \frac{dC}{dY[l]} \cdot \frac{dY[l]}{db[l]} \\
+	\end{cases}
+\end{equation*} 
+with \textit{Y[l]} being equal to $L[l]=A[l-1]\times W[l]+b[l]$ for the last layer and to $A[l]=tanh(L[l])$ for the others.\\
+The above code implement exactly this, taking into account that the activation function is a $tanh(\cdot)$, and the subsequent update of the parameters, based on their gradients. At the beginning only gradient descent was implemented, directly into the code; that lines have been kept commented for documentation purposes, since they show what the call to the optimizer is supposed to do.\footnote{Optimization done calling the overloaded call operator isn't very elegant anymore, but it was designed when polymorphism wasn't implemented yet, so one had something like {\ttfamily W\_optimizer[l](W[l],dW[l],alpha,t)}, but then polymorphism required to store pointers in the optimizers vectors. Of course one can always do {\ttfamily W\_optimizer[l]->()(W[l],dW[l],alpha,t)}.}\\
+The training function ends with the refinement and the final output:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+	//update refinement parameters for the next training loop:
+	alpha=alpha/10;
+	tolerance=tolerance/((10-2*ref)*10);
+	}//End of the refinements loop
+
+	//////////////////////////
+	//     Final output     //
+	//////////////////////////
+	backup_t[nrefinements-1] == 0 ? 
+	cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)+niter<<"\n"<<"Cost functional on the training set = "<<cost<<endl :
+	cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)<<"\n"<<"Cost functional on the training set = "<<cost<<endl;
+
+}//End of the train function
+\end{lstlisting}
+where {\ttfamily std::accumulate()} is used to output the total number of iterations, since the counter is reset at every refinement. Of course one could have distinguished the cases with refinements from the ones which haven't, so e.g. to not defining the vector {\ttfamily backup\_t} when not required, but it has been preferred to not do so in order to avoid a further decision tree in the code. The last check, based on the conditional operator, is instead needed: it distinguishes between the case in which the training phase ends for having reached convergence or the maximum number of iterations.\\
+\newline \noindent The {\ttfamily test()} function performs just one forward propagation, with two main differences w.r.t. {\ttfamily train()}:
+\begin{itemize}
+	\item it doesn't store nor data neither intermediate results, since it wouldn't re-use them, to save memory;
+	\item it is a non-void function, in part due to the above fact, but mainly because one expects to have an output from the test.
+\end{itemize}
+\begin{lstlisting}[frame=single]
+pair<VectorXd,double> test(const MatrixXd & Data){
+	//One forprop as before during training,
+	//w/o storing anything but the final result:
+	MatrixXd Ltest{Data.col(0)};
+	MatrixXd Atest{Ltest};
+	for(size_t l=1; l<nlayers-1; ++l){
+		Ltest = ( Atest*W[l-1] ).rowwise() + b[l-1].transpose();
+		Atest = tanh( Ltest.array() );	
+	}
+	Ltest = ( Atest*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose();
+	
+	//Computation of the L2 relative error:
+	double numerator=(Data.col(1)-Ltest).norm();
+	double denominator=(Data.col(1).norm() + Ltest.norm())/2.;
+	
+	return make_pair(Ltest, (numerator/denominator) );
+}
+\end{lstlisting}
+One could ask why don't use the members {\ttfamily A, L} anyway, so to don't even have to allocate the two matrices. In principle it could be done actually, but it would require more coding: {\ttfamily A[l], L[l]} have to be resized for every {\ttfamily l}, since in general the numerosity of the training set is different from the one of the tests set; instead the above approach has been preferred in order to keep the code as simple as possible.\\
+\newline\noindent Final remarks: as can be seen, the code, despite being 1D, can be extended to a n-d interpolator with no conceptual effort (of course, this potentially introduces a great number of choices for the coder, and so of a lot of time-consuming new-parameters tuning). The very simplest way to do so would be to make the first layer too to have a {\ttfamily W} (and a {\ttfamily b}, and so even backprop variables too), basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$, in such a way that the second layer takes just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}.\\
+Of course even in this case it would be possible to give different importance even to the single tuples of coordinates too, as it has been proposed before for the 1D case. That would by sure introduce some overhead, so it has to be done only if the results wouldn't be satisfactory enough otherwise.\\
+Moreover that ``squeezing'' from n-D to 1D could be performed later on, in another layer. This action might have two concurring effects: from one side we are increasing the computational effort, but from the other one less iterations might be needed to reach convergence, since we are keeping the richness of the data ``alive" for more time.\\
+It worth considering that, especially in DNN programming, the more one enrich the code and exponentially more tuning is needed, because not only new choices have to be tested, but even their combinations with the already existing hyper-parameters. It's thus clear that at the moment that would go over the aims of the present project as outlined in the \hyperref[introduction]{introduction}.
 
 
 \section{The Optimizers class templates}\label{section3.3}

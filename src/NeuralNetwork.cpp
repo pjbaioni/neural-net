@@ -200,7 +200,7 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 }//End of the train function
 
 //Test function:
-pair<VectorXd,double> NeuralNetwork::test(const Eigen::MatrixXd & Data){
+pair<VectorXd,double> NeuralNetwork::test(const MatrixXd & Data){
 	
 	//One forprop as before during training,
 	//w/o storing anything but the final result:

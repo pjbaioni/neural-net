@@ -114,7 +114,7 @@ int main(int argc, char** argv){
 	//plot:
 	gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
   "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prev))<<
-  "w lp lw 1.5 title 'Prevision'";
+  "w lp lw 1.5 title 'Prevision'"<<endl;
 	
 	return 0;
 } 
