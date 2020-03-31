@@ -775,7 +775,7 @@ pair<VectorXd,double> test(const MatrixXd & Data){
 \end{lstlisting}
 One could ask why don't use the members {\ttfamily A, L} anyway, so to don't even have to allocate the two matrices. In principle it could be done actually, but it would require more coding: {\ttfamily A[l], L[l]} have to be resized for every {\ttfamily l}, since in general the numerosity of the training set is different from the one of the tests set; instead the above approach has been preferred in order to keep the code as simple as possible.\\
 \newpage\noindent Before moving to the optimizers classes, we consider some final remarks.\\
-As can be seen, the code, despite being 1D, can be extended to a n-d interpolator with no conceptual effort. The very simplest way to do so would be to equip also the first layer with a {\ttfamily W}\footnote{and a {\ttfamily b}, and so even backprop variables too}, basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$. Indeed doing so that the second layer would take as input just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}.\\
+As can be seen, the code, despite being 1D, can be extended to a n-d interpolator with no conceptual effort. The very simplest way to do so would be to equip also the first layer with a {\ttfamily W}\footnote{and a {\ttfamily b}, and so even backprop variables too.}, basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$. Indeed doing so that the second layer would take as input just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}.\\
 Of course also in this case it would be possible to give different importance even to the single tuples of coordinates too, as it has been proposed before for the 1D case. That would by sure introduce some overhead, so it has to be done only if the results won't be satisfactory enough otherwise.\\
 Moreover that ``squeezing'' from n-D to 1D could be performed later on, in another layer. This action might have two concurring effects: from one side the computational effort of every training iteration is being increased, but from the other one less iterations might be needed to reach convergence, since the richness of the data is being kept ``alive" longer.\\
 These improvements haven't been introduced yet, since they go over the aims of the present project as they are outlined in the \hyperref[introduction]{introduction}. Notwithstanding this, it is worth noting that, especially in DNN programming, the more the code is enriched and exponentially the more tuning is necessary; in fact, not only the new choices must be tested, but also all their combinations with the previous hyper-parameters; so the above modifications, albeit quite simple conceptually, could require a slightly significant time to be implemented in an effective way.
@@ -857,7 +857,7 @@ public:
 };
 \end{lstlisting}
 \noindent Of course, to allow declaring the Adam optimizer as friend class, it has been pre-declared before defining {\ttfamily RMSprop<T>}.\\
-The {\ttfamily KingmaBa<T>} class is the only abstract class of the hierarchy. It has been introduced to provide the common interface to two great optimizers, Adam and AdaMax, which have been introduced in the same article by \cite{Kingma}:
+The {\ttfamily KingmaBa<T>} class is the only abstract class of the hierarchy. It has been implemented to provide the common interface to two great optimizers, Adam and AdaMax, which have been introduced in the same article by \cite{Kingma}:
 \begin{lstlisting}[frame=single]
 template<typename T>
 class KingmaBa : public GDwithMomentum<T>{
@@ -872,7 +872,7 @@ public:
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override = 0;
 };
 \end{lstlisting}
-\noindent The Adam optimizer includes an elevation to the iteration number-th power, which is of unsigned type. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary when the exponent is an integer, at first the {\ttfamily Adam<T>} class used a function like this one:
+\noindent The Adam optimizer includes an operation of elevation to the iteration number-th power, which is a non-negative integer. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary when the exponent is an integer, at first the {\ttfamily Adam<T>} class employed a function like this one:
 \begin{lstlisting}[frame=single]
 double mypow(double b, const std::size_t e){
 	for(std::size_t i=1; i<e; ++i)
@@ -880,8 +880,8 @@ double mypow(double b, const std::size_t e){
 	return b;	
 }
 \end{lstlisting}
-But later on, compiling with optimization, it turned out that, on the performed test, the standard library function was actually faster, with a total execution time of 5-6 seconds instead of 14-15 seconds on the used machine, and guaranteed a better result too, namely $~0.7 \%$ instead of $~1.1\%\,\,L_2$ relative error on the test set.\footnote{This seems to be due to the fact that the iteration number, that is the exponent, becomes early a large number, typical values ranging from $10^4$ to $10^5$.} So the Adam optimizer has been implemented in this way:
- 
+But later on, compiling with optimization options, it turned out that, at least on the performed test, the standard library function was actually faster, with a total execution time of 4-5 seconds instead of 21-22 seconds on the used machine, and guaranteed a better result too, namely $~2\%$ instead of $~3.9\%$ relative $L_2$ error on the test set.\footnote{This seems to be due to the fact that the iteration number, that is the exponent, becomes early a large number, typical values' order of magnitude ranging from $10^4$ to $10^5$.}\\
+So the Adam optimizer has been implemented in this way:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 template<typename T>
 class Adam final : public KingmaBa<T>{
@@ -905,7 +905,7 @@ public:
 	}	
 };
 \end{lstlisting}
-The above implementation doesn't follow strictly the one proposed in the literature: the correction step required by the algorithms has been composed with the update step, for performance reason. Anyway, also the standard algorithm steps are present in the code, albeit commented out (not reported here to save space).\\
+The above implementation doesn't follow strictly the one proposed in the literature: the correction step required by the algorithm has been composed with the update step, to enhance performance. Anyway, also the standard algorithm steps are present in the code, albeit commented out (not reported here to save space).\\
 Last, the AdaMax optimizer:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 template<typename T>
