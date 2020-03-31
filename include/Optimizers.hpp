@@ -7,14 +7,6 @@
 
 namespace Optimizers{
 
-/*
-In the following T is meant to be a Eigen matrix type.
-It is necessary to work both with VectorXd and MatrixXd.
-Maybe it's better to use something like:
-	template <typename Derived>
-	void function_name( const MatrixBase<Derived> &)
-*/
-
 template<typename T>
 class GradientDescent{
 protected:
@@ -84,7 +76,7 @@ class Adam final : public KingmaBa<T>{
 private:
 	RMSprop<T> rms;
 	T correction_step(const double beta, const std::size_t t, const T & mt){
-		return ((1.0/(1.0-std::pow(beta,t)))*mt); //check performance
+		return ((1.0/(1.0-std::pow(beta,t)))*mt); //std::pow faster then for loop based "mypow()", see doc
 	}
 public:
 	Adam(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), rms(m,n){}
@@ -111,8 +103,11 @@ private:
 	T ut;
 	
 	T cwiseMax(const T& a, const T& b){
-		//both T must have same dimensions, implement a check
 		T ret(a.rows(),a.cols());
+		if(a.rows()!=b.rows() || a.cols()!=b.cols()){
+			std::cerr<<"In AdaMax dimensions must match!\n";
+			return ret;
+		}
 		for(size_t i=0; i<a.rows(); ++i)
 			for(size_t j=0; j<a.cols();++j)
 				ret(i,j)=std::max(a(i,j),b(i,j));
@@ -129,7 +124,7 @@ public:
 	
 	//Memory already saved here, since AdaMax doesn't require an Adam-like correction step:
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
-		//compute the momenta
+		//compute the momenta:
 		this->compute_momentum(gt);										//GDwithMomentum step
 		ut = cwiseMax(this->beta2*ut,gt.cwiseAbs());	//AdaMax step
 		//update:

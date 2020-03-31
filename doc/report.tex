@@ -431,7 +431,7 @@ are needed, confirming that a deep neural network is computational more convenie
 \chapter{Implementation of neural-net}\label{chapter3}
 \setcounter{figure}{8}
 In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given. As just shown in chapter \ref{chapter2}, what different DNN based PDE solvers have in common is their relying on whats turn out to be DNN's numerical analysis strongest point: their remarkably capability of reconstructing function, which is used to construct the basis of the approximation spaces. For this reason it has been decided to start writing an interpolator based on DNNs; different possible expansions are being investigated as well.\\
-The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the web page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\\
+The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the web page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\footnote{At the moment, already merged branches have not been deleted yet for personal ease in history navigation, e.g. when typing {\ttfamily \$ git log --pretty=format:"\%h \%s" --graph}, but the master branch is the only one which is really active.}\\
 In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the README.md file and in chapter \ref{chapter4}, where it is shown how to build the program and run an example. 
 
 \section{Directory tree}
@@ -777,10 +777,171 @@ One could ask why don't use the members {\ttfamily A, L} anyway, so to don't eve
 \newline\noindent Final remarks: as can be seen, the code, despite being 1D, can be extended to a n-d interpolator with no conceptual effort (of course, this potentially introduces a great number of choices for the coder, and so of a lot of time-consuming new-parameters tuning). The very simplest way to do so would be to make the first layer too to have a {\ttfamily W} (and a {\ttfamily b}, and so even backprop variables too), basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$, in such a way that the second layer takes just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}.\\
 Of course even in this case it would be possible to give different importance even to the single tuples of coordinates too, as it has been proposed before for the 1D case. That would by sure introduce some overhead, so it has to be done only if the results wouldn't be satisfactory enough otherwise.\\
 Moreover that ``squeezing'' from n-D to 1D could be performed later on, in another layer. This action might have two concurring effects: from one side we are increasing the computational effort, but from the other one less iterations might be needed to reach convergence, since we are keeping the richness of the data ``alive" for more time.\\
-It worth considering that, especially in DNN programming, the more one enrich the code and exponentially more tuning is needed, because not only new choices have to be tested, but even their combinations with the already existing hyper-parameters. It's thus clear that at the moment that would go over the aims of the present project as outlined in the \hyperref[introduction]{introduction}.
+It is worth noting that, especially in DNN programming, the more the code is enriched and exponentially the more tuning is necessary; in fact, not only the new choices must be tested, but also all their combinations with the previous hyper-parameters.
+It's worth considering that, especially in DNN programming, the more the code is enriched and exponentially the more tuning is necessary; indeed not only the new choices have to be tested, but also their combinations with the already existing hyper-parameters have so. It's thus clear that at the moment that would go over the aims of the present project as they have been outlined in the \hyperref[introduction]{introduction}.
 
-
+\newpage
 \section{The Optimizers class templates}\label{section3.3}
+In the {\ttfamily namespace Optimizers\{...\}} six class are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates. Moreover, in order to be able to use polymorphism so to let the user choose the desired optimizer runtime, they are all related by inheritance, following this hierarchy:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{img/classes1}
+	\caption{single inheritance pattern}\label{fig9}
+\end{figure}
+\newpage \noindent As it was done at first, it might seem reasonable to imagine a logical structure like the one sketched here instead:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{img/classes2}
+	\caption{multiple inheritance pattern}
+\end{figure}
+\noindent but in this last case the multiple inheritance parts would have involved deadlock diamonds, requiring virtual inheritance.\\
+Despite the last one being a possible choice, it has been decided to use only public single inheritance, employing only ``is a'' and ``has a'' relationships, so to keep the code as simple as possible, and also to avoid some overhead.\\
+Finally, in order to keep the correct encapsulation even in the single inheritance - Fig. \ref{fig9} design while guaranteeing {\ttfamily Adam<T>} access to its {\ttfamily RMSprop<T>} member {\ttfamily rms} members, class {\ttfamily RMSprop<T>} privately declares class {\ttfamily Adam<T>} as friend.\\
+\newline \noindent In the following we go a little deeper in some implementation details, class by class.\\
+The gradient descent class is straightforward, it's here reported for completeness since it's the base class:
+\begin{lstlisting}[frame=single]
+template<typename T>
+class GradientDescent{
+protected:
+	virtual void update_objective(T& theta, const T& delta_theta, const double& alpha){
+		theta = theta - alpha*delta_theta;  
+	}
+public:
+	GradientDescent()=default;
+	GradientDescent(const size_t & m, const size_t & n):GradientDescent(){}
+	virtual ~GradientDescent()=default;
+	virtual void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t){
+		update_objective(theta,gt,alpha);
+	}
+};
+\end{lstlisting}
+\noindent Two decisions have been taken, mostly for ease: the template has been kept general, while it could have been specified a little more, using for example {\ttfamily Eigen::MatrixBase<T>}; and unused arguments have been passed to the overloaded call operator, so to have all the arguments that a general optimizer could need, in order to allow overriding in future derived classes.\\
+The gradient descent with momentum class is the first one that implements gradients estimation, for this reason it has a member which is of the same type of the gradient to be estimated:
+\begin{lstlisting}[frame=single]
+template<typename T>
+class GDwithMomentum : public GradientDescent<T>{
+protected:
+	T mt;
+	double beta{0.9};
+	virtual void compute_momentum(const T & to_be_averaged){
+		mt = beta*mt + (1. - beta)*to_be_averaged;
+	}
+
+public:
+	GDwithMomentum(const size_t & m, const size_t &n):GradientDescent<T>::GradientDescent(m,n),mt(m,n){}
+
+	virtual void set_beta(double b){beta=b;}
+
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
+		compute_momentum(gt);
+		this->update_objective(theta,mt,alpha);
+	}
+};
+\end{lstlisting}
+The RMSprop optimizer, besides updating in its own way the objective, it's the first to introduce a member, called espilon, which is not foreseen in the theory, and that it's here used to prevent division by zero, but also to be declared as final, and consequently to use {\ttfamily private} instead of {\ttfamily protected} in its definition: 
+\begin{lstlisting}[frame=single]
+template<typename T>
+class RMSprop final : public GDwithMomentum<T>{
+private:
+	double epsilon{1e-8};
+	friend class Adam<T>;
+
+public:
+	RMSprop(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
+	virtual void set_eps(double e){epsilon=e;}
+
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
+		this->compute_momentum(gt.cwiseProduct(gt));
+		this->update_objective(theta, (gt.cwiseProduct((1./(epsilon + sqrt(this->mt.array()))).matrix())), alpha);
+	}
+};
+\end{lstlisting}
+\noindent Of course, to allow declaring the Adam optimizer as friend class, it has been pre-declared before defining {\ttfamily RMSprop<T>}.\\
+The {\ttfamily KingmaBa<T>} class is the only abstract class of the hierarchy. It has been introduced to provide the common interface to two great optimizers, Adam and AdaMax, which have been introduced in the same article by \cite{Kingma}:
+\begin{lstlisting}[frame=single]
+template<typename T>
+class KingmaBa : public GDwithMomentum<T>{
+protected:
+	double beta2{0.999};
+
+public:
+	KingmaBa(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
+	
+	virtual void set_beta2(double b2){ beta2=b2;}
+
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override = 0;
+};
+\end{lstlisting}
+\noindent The Adam optimizer includes an elevation to the iteration number-th power, which is of unsigned type. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary when the exponent is an integer, at first the {\ttfamily Adam<T>} class used a function like this one:
+\begin{lstlisting}[frame=single]
+double mypow(double b, const std::size_t e){
+	for(std::size_t i=1; i<e; ++i)
+		b*=b;
+	return b;	
+}
+\end{lstlisting}
+But later on, compiling with optimization, it turned out that, on the performed test, the standard library function was actually faster, with a total execution time of 5-6 seconds instead of 14-15 seconds on the used machine, and guaranteed a better result too, namely $~0.7 \%$ instead of $~1.1\%\,\,L_2$ relative error on the test set.\footnote{This seems to be due to the fact that the iteration number, that is the exponent, becomes early a large number, typical values ranging from $10^4$ to $10^5$.} So the Adam optimizer has been implemented in this way:
+ 
+\begin{lstlisting}[frame=single, showstringspaces=false]
+template<typename T>
+class Adam final : public KingmaBa<T>{
+private:
+	RMSprop<T> rms;
+	T correction_step(const double beta, const std::size_t t, const T & mt){
+		return ((1.0/(1.0-std::pow(beta,t)))*mt);
+	}
+
+public:
+	Adam(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), rms(m,n){}
+
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
+		//compute the momenta:
+		this->compute_momentum(gt);	//GDwithMomentum step
+		rms.set_beta(this->beta2);
+		rms.compute_momentum(gt.cwiseProduct(gt));//RMSprop step
+
+		//update:
+		this->update_objective(theta,( (correction_step(this->beta,t,this->mt)).cwiseProduct( ( 1./(rms.epsilon + sqrt((correction_step(this->beta2,t,rms.mt)).array())) ).matrix() )), alpha);
+	}	
+};
+\end{lstlisting}
+The above implementation doesn't follow strictly the one proposed in the literature: the correction step required by the algorithms has been composed with the update step, for performance reason. Anyway, also the standard algorithm steps are present in the code, albeit commented out (not reported here to save space).\\
+Last, the AdaMax optimizer:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+template<typename T>
+class AdaMax final : public KingmaBa<T>{
+private:
+	T ut;
+	T cwiseMax(const T& a, const T& b){
+		T ret(a.rows(),a.cols());
+		if(a.rows()!=b.rows() || a.cols()!=b.cols()){
+		std::cerr<<"In AdaMax dimensions must match!\n";
+		return ret;
+		}
+		for(size_t i=0; i<a.rows(); ++i)
+			for(size_t j=0; j<a.cols();++j)
+				ret(i,j)=std::max(a(i,j),b(i,j));
+		return ret;
+	}
+	double epsilon{1e-8};
+	
+public:
+	AdaMax(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), ut(m,n){}
+
+	void set_epsilon(double e){epsilon=e;}
+	
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
+		//compute the momenta:
+		this->compute_momentum(gt);		  	//GDwithMomentum step
+		ut=cwiseMax(this->beta2*ut,gt.cwiseAbs());//AdaMax step
+	
+		//update:
+		this->update_objective(theta, (( 1. / (1.-std::pow(this->beta,t)) ) * ( this->mt.cwiseProduct( (1./(epsilon+ut.array())).matrix() ) )), alpha);
+	}
+
+};
+\end{lstlisting}
+Notice that the epsilon member could have been avoided if multiple inheritance were used.
 \section{Write\_set and data}
 \section{The main}
 
@@ -908,7 +1069,7 @@ Ok: Normal End
 	\bibitem[gnuplot-iostream]{gnuplot-iostream} A C++ interface to gnuplot, \href{https://github.com/dstahlke/gnuplot-iostream}{\emph{https://github.com/dstahlke/gnuplot-iostream}}
 	\bibitem[Jinchao Xu et al.]{Jinchao} Juncai He, Lin li, Jinchao Xu, Chunyue Zheng, \emph{ReLU Deep Neural Networks and Linear Finite Elements}, 2018, found at \href{https://arxiv.org/abs/1807.03973}{\emph{https://arxiv.org/abs/1807.03973}}
 	\bibitem[Kailai et al.]{Kailai} Kailai Xu, Bella Shi, Shuyi Yin, code and technical report of the project for the course CS230 \emph{Deep Learning, Winter 2018, Stanford University}, found at \href{https://github.com/kailaix/nnpde}{\emph{https://github.com/kailaix/nnpde}}
-	\bibitem[Kingma-LeiBa]{Kingma} Diederik P. Kingma, Jimmy Lei Ba,\emph{Adam: a method for stochastic optimization}, 2015, found at
+	\bibitem[Kingma-Ba]{Kingma} Diederik P. Kingma, Jimmy Lei Ba,\emph{Adam: a method for stochastic optimization}, 2015, found at
 	\href{https://arxiv.org/abs/1412.6980}{\emph{https://arxiv.org/abs/1412.6980}} 
 	\bibitem[Lagaris et al.]{Lagaris} I.E. Lagaris, A. Likas and D.I. Fotiadis: \emph{Artificial Neural Networks for Solving Ordinary and Partial Differential Equations}, 1997, found at \href{https://arxiv.org/abs/physics/9705023}{\emph{https://arxiv.org/abs/physics/9705023}}
 	\bibitem[Make]{make} GNU Make doc at \href{https://www.gnu.org/software/make/manual}{\emph{https://www.gnu.org/software/make/manual}}
