@@ -369,7 +369,7 @@ where \textit{A} is the output of the neural network approximating the boundary 
 \sum_{i=1}^m\left((g_D)_i - u(x_i,y_i)\right)^2 + \sum_{i=1}^n\left(f(x_i,y_i) - Lu(x_i,y_i)\right)^2
 \end{equation}
 $L$ being the differential operator in strong form.\\
-More precisely their algorithm has two nested loops: for every iteration of the interior network, they perform a full training of the boundary network. Using a $sin(\cdot)sin(\cdot)$ manufactured solution on the unit square with their code, freely available on Github, is possible to recover a very good solution in few hundreds of iterations\footnote{Code and report are here: \cite{Kailai}; notice that it requires Python2 and TensorFlow. Figure \ref{pd1} can be found at the same site.}:
+More precisely their algorithm has two nested loops: for every iteration of the interior network, they perform a full training of the boundary network. Using a $sin(\cdot)sin(\cdot)$ manufactured solution on the unit square with their code, freely available on Github, is possible to recover a very good solution in few hundreds of iterations\footnote{Code and report are here: \cite{Kailai}; notice that it requires \cite{python} 2.7 and \cite{tensorflow}. Figure \ref{pd1} can be found at the same site.}:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=14cm]{img/pd1.png}
@@ -984,7 +984,7 @@ To run the code, save it as and edp file: <filename>.edp
 (Note that edp files can be opened by any text editor, saving
 as .txt works as well)
 Then in a terminal emulator do:
-$ FreeFem++ filename.edp
+$ FreeFem++ <filename>.edp
 
 The code has been tested on Debian 9.9,
 equipped with FreeFem++ version  3.47 
@@ -997,7 +997,8 @@ pjbaioni 2020
 ///////////////////////////////////
 
 // Mesh
-int n=36; //n -> dofs: 9 -> 13, 12 -> 20, 16 -> 30 , 18 -> 41, 20 -> 45 ...
+int n=36; 
+//n->dofs: 9->13, 12->20, 16->30, 18->41, 20->45, 36->137
 border c(t=0, 2*pi){x=cos(t); y=sin(t); label=1;}
 mesh Th=buildmesh(c(n));
 plot(Th,cmm="Mesh",wait=1);
@@ -1020,7 +1021,7 @@ func g = 0;
 // Solution
 Vh uh,vh;
 macro grad(u) [dx(u), dy(u)] //
-solve poisson2d(uh,vh,solver=CG)=int2d(Th)(grad(uh)'*grad(vh))
+solve poisson2d(uh,vh,solver=CG)=int2d(Th)(grad(uh)'*grad(vh))//'
 -int2d(Th)(f*vh)
 +on(1,uh=g);
 plot(uh,fill=1,value=1,cmm="uh",wait=1);
@@ -1072,8 +1073,11 @@ Ok: Normal End
 	\bibitem[Kingma-Ba]{Kingma} Diederik P. Kingma, Jimmy Lei Ba,\emph{Adam: a method for stochastic optimization}, 2015, found at
 	\href{https://arxiv.org/abs/1412.6980}{\emph{https://arxiv.org/abs/1412.6980}} 
 	\bibitem[Lagaris et al.]{Lagaris} I.E. Lagaris, A. Likas and D.I. Fotiadis: \emph{Artificial Neural Networks for Solving Ordinary and Partial Differential Equations}, 1997, found at \href{https://arxiv.org/abs/physics/9705023}{\emph{https://arxiv.org/abs/physics/9705023}}
-	\bibitem[Make]{make} GNU Make doc at \href{https://www.gnu.org/software/make/manual}{\emph{https://www.gnu.org/software/make/manual}}
+	\bibitem[Lippman et al.]{lippman} Stanley B. Lippman, Josee Lajoie, Barbara E. Mojo, C++ primer - Fifth Edition, Addison-Weasly/Pearson Education, 2012.
+	\bibitem[Make]{make} GNU Make doc,  \href{https://www.gnu.org/software/make/manual}{\emph{https://www.gnu.org/software/make/manual}}
+	\bibitem[Python]{python} Python programming language, \href{https://www.python.org/}{https://www.python.org/}
 	\bibitem[Sirignano-Spiliopoulos]{Sirignano}Justin Sirignano, Konstantinos Spiliopoulos: \emph{DGM: A deep learning algorithm for solving partial differential equations}, 2018, found at \href{https://arxiv.org/abs/1708.07469}{\emph{https://arxiv.org/abs/1708.07469}}
+	\bibitem[TensorFlow]{tensorflow} TensorFlow ML library, \href{https://www.tensorflow.org/}{https://www.tensorflow.org/}
 	\bibitem[Weinan-Bing]{Weinan} Weinan E, Bing Yu \emph{The Deep Ritz method: A deep learning-based numerical algorithm for solving variational problems}, 2017, found at \href{https://arxiv.org/abs/1710.00211}{\emph{https://arxiv.org/abs/1710.00211}}
 	
 \end{thebibliography}
