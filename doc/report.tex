@@ -437,7 +437,7 @@ In order to build and run the program, some not included dependencies are needed
 \section{Directory tree}
 Downloading the repository ``neural-net'' one finds:
 \begin{itemize}
-	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, \cite{gnuplot} scripts in .gnu format, and their graphical output in .png format;
+	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, and \cite{gnuplot} scripts in .gnu format to generate dataset graphs;
 	\item the \textit{doc} folder, containing this documentation in .tex and .pdf format, plus the \textit{img} sub-folder where the images included by the TeX file are stored;
 	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters file and command line options, \textit{gnuplot-iostream.hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork class, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as class templates;
 	\item the \textit{src} folder, which contain the source files main.cpp, NeuralNetwork.cpp, where the NeuralNetwork class member functions are defined, the Makefile which can be used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets is placed;
@@ -941,7 +941,7 @@ public:
 };
 \end{lstlisting}
 Notice that the epsilon member could have been avoided if multiple inheritance were used.
-\section{Write\_set and datasets}
+\section{Write\_set and datasets}\label{section3.4}
 The src/write\_set folder contains the source file write\_set.cpp, which is used to generate the training and test datasets.\\
 This is the first source file to rely to GetPot for the input phase:
 \begin{lstlisting}[frame=single, showstringspaces=false]
@@ -1080,7 +1080,7 @@ which redirect the {\ttfamily std::cout} stream buffer to the output file one (a
 %This steps results in an output like the following:\\
 %{\\ \ttfamily 
 %	\$ ./main.out\\
-%	Total iterations = 16766\\
+%	Total iterations = 16666\\
 %	Cost functional on the training set = 0.000157491\\
 %	Relative L2 error on test set = 0.00702565\\
 %	Output written on ./../data/yhat300.dat\\
@@ -1113,9 +1113,92 @@ At the moment of writing some graphical functionalities, like adding the grid in
 
 
 \chapter{Examples}\label{chapter4}
+In this chapter we provide a complete example of building and running the program; some info are already reported in README.md.\\
+Here it is assumed that the user is in the directory neural-net, that employs the \cite{pacs} course modules, year 2018-2019, and that \cite{eigen} and \cite{boost} modules have been already loaded, e.g. like that:\\
+{\\ \ttfamily 
+	\$ source /u/sw/etc/bash.bashrc\\
+	\$ module load gcc-glibc/7\\
+	\$ module load eigen\\
+	\$ module load boost\\
+	\\}
+The program has been tested with the new modules too, in that case of course the second line above should be substitute with:\\
+{\\ \ttfamily 
+	\$ module load gcc-glibc/9\\
+	\\}
+Currently the last versions of the code have been tested only with modules, but there should be no problems at all if a local standard installation of the required libraries is used. In this case in the passages that follows the directives that make use of environmental variables starting with {\ttfamily mk} have to be corrected in such a way that they take the path to the correct directories.
+\newpage
+\section{Building}
+The main program is built through \cite{make}; in particular in the src folder this Makefile is placed:
+\begin{lstlisting}[frame=single]
+CXXFLAGS += -std=c++14 -Ofast
+CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I$$mkBoostInc -I./../include/
+LDLIBS += -L$$mkBoostLib -lboost_filesystem -lboost_system -lboost_iostreams
+OUTPUT_OPTION=-o $@
+EXE = main.out
+HEADERS=./../include/$(wildcard *.hpp)
+SRCS=$(wildcard *.cpp)
+OBJS=$(SRCS:%.cpp=%.o)
+OPTIONS=minimal_output
 
-\section{Building instructions}
+main.o: $(HEADERS) $(SRCS)
+NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
+
+.PHONY: all build clean distclean run
+
+.DEFAULT_GOAL = build
+
+all: build
+
+build: $(EXE)
+
+$(EXE): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDLIBS) $^ $(OUTPUT_OPTION)
+
+clean:
+	$(RM) $(OBJS)
+
+distclean: clean
+	$(RM) $(EXE)
+
+run:
+	./$(EXE) $(OPTIONS)
+\end{lstlisting}
+which, beside defining some useful variables and phony calls, compiles the objects relying on implicit rules, and then links them explicitly.\\
+To build the program it's thus sufficient to run the makefile in the src folder:\\
+{\\ \ttfamily 
+	neural-net\$ cd src\\
+	src\$ make\\
+	\\}
+Typing {\ttfamily make all} or {\ttfamily make build} will produce the same result. The expected output is:\\
+{\\ \ttfamily 
+ src\$ make \\
+g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc -I./../include/  -c -o NeuralNetwork.o NeuralNetwork.cpp\\
+g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc -I./../include/  -c -o main.o main.cpp\\
+g++ -std=c++14 -Ofast -L\$mkBoostLib -lboost\_filesystem -lboost\_system -lboost\_iostreams NeuralNetwork.o main.o -o main.out\\
+	\\}
+Of course the program can be built even without Make; it's enough to copy and paste the three above instruction to the terminal.\\
+The program requires some data to be run, examples of which are already provided in the data folder. Input datafiles can be edited in any way, but, for what concerns the training and test datasets, the easiest one is to use the provided {\ttfamily write\_set.cpp} utility.\\
+To do build it, while being in the src folder, it's enough to type:\\
+{\\ \ttfamily 
+	src\$ cd src/write\_set\\
+	write\_set\$ g++ -std=c++14 -I\$mkEigenInc -I./../../include/ write\_set.cpp\\
+\\}
+Mind that, since it uses GetPot, if the only changes concern the numerosity of the datasets, after having built it once it's enough to change the ``parameters.pot" file in the data folder. As showed in section \ref{section3.4}: \\
+{\\ \ttfamily 
+	write\_set\$ ./a.out --help\\
+\\}
+gives some info more about that.\\
+\newline\noindent For what concerns the modifications when modules are not used, for write\_set it's enough to change the line as:\\
+{\\ \ttfamily 
+	write\_set\$ g++ -std=c++14 -I/path/to/eigen/directory/ -I./../../include/ write\_set.cpp\\
+\\}
+Similar changes, for the {\ttfamily -I} and {\ttfamily -L} directives, are required in the Makefile for the main program.
+
 \section{Reconstruction of a wave packet}
+
+\section{Final remarks} 
+%minimal_output e string--> problema di getpot, almeno su questa architettura. prova anche su ubuntu e moduli nuovi.
+%c++14 during development perché auto trailing return spesso. Poi rimosso, credo ovunque, per chiarezza/leggibilità. Mantenuto c++14 perché è stato sviluppato così, ma funziona anche con c++11 (prova). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1221,7 +1304,7 @@ Ok: Normal End
 \begin{thebibliography}{10}
 	\addcontentsline{toc}{chapter}{Bibliography}
 	
-	\bibitem[APSC]{PACS} Advanced Programming for Scientific Computing course lectures and material, Politecnico di Milano, 2019.
+	\bibitem[APSC]{pacs} Advanced Programming for Scientific Computing course lectures and material, Politecnico di Milano, 2019.
 	\bibitem[Andrew NG]{AndrewNG} Professor Andrew NG's Deep Learning MOOC at Coursera, \href{https://www.coursera.org/specializations/deep-learning}{\emph{https://www.coursera.org/specializations/deep-learning}}, consulted in 2019.
 	\bibitem[Boost]{boost} Boost C++ libraries, \href{https://www.boost.org/}{\emph{https://www.boost.org/}}
 	\bibitem[cppreference.com]{cppreference} An online reference of the C++ language, \href{https://en.cppreference.com/w/cpp}{\emph{https://en.cppreference.com/w/cpp}}
