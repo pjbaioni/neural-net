@@ -1113,6 +1113,7 @@ At the moment of writing some graphical functionalities, like adding the grid in
 
 
 \chapter{Examples}\label{chapter4}
+\setcounter{figure}{11}
 In this chapter we provide a complete example of building and running the program; some info are already reported in README.md.\\
 Here it is assumed that the user is in the directory neural-net, that employs the \cite{pacs} course modules, year 2018-2019, and that \cite{eigen} and \cite{boost} modules have been already loaded, e.g. like that:\\
 {\\ \ttfamily 
@@ -1195,10 +1196,110 @@ gives some info more about that.\\
 Similar changes, for the {\ttfamily -I} and {\ttfamily -L} directives, are required in the Makefile for the main program.
 
 \section{Reconstruction of a wave packet}
+As first example of execution, the program is run using the provided datasets ``LinspacedTrainingSet70.dat" and ``LinspacedTestSet300.dat", using the architecture provided in ``architecture.dat".\\
+Having built the main program as in the previous section, while being in the src folder we tipe:\\
+{\\ \ttfamily 
+	src\$ make run\\
+\\}
+which gives:\\
+{\\ \ttfamily 
+Total iterations = 16666\\
+Cost functional on the training set = 0.000157491\\
+Relative L2 error on test set = 0.00702565\\
+Output written on ./../data/yhat300.dat\\
+}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{img/Prevision300} 
+	\caption{Test1 - 300 samples}
+\end{figure}
+showing very good results. It has to be notice that, as anticipated in chapter \ref{chapter1}, actually the test set has to be just big enough to check the performance of the net. For this purpose the ``LinspacedTestSet30.dat" it's perfect, and indeed its output is:\\
+{\\ \ttfamily 
+	Total iterations = 16666\\
+	Cost functional on the training set = 0.000157491\\
+	Relative L2 error on test set = 0.00776613\\
+	Output written on ./../data/yhat30.dat\\
+\\}
+The former however has been chosen as standard because the 30 samples test set gives rise to a too low resolution graph:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{img/Prevision1-30_nogrid} 
+	\caption{Test2 - 30 samples}
+\end{figure}
+\noindent To pass options to the main it's possible to use make, redefining the variable {\ttfamily OPTIONS} runtime, e.g.:
+{\\ \ttfamily 
+src \$ make run OPTIONS="--verbose" \\
+./main.out --verbose\\
+t=25 cost=2.34785 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+t=50 cost=2.70241 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+t=75 cost=2.33865 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+...\\
+}
+Some parameters can be changed editing the ``parameters.pot" file (or another one, and passing it's name to main):
+\begin{lstlisting}[frame=single,showstringspaces=false]
+###########################################################
+######### Runtime data for Neural Network - main ##########
+###########################################################
 
+# When tuning the net, it's better to start from alpha and 
+# architecture keeping others parameters s.t. the program 
+# runs long enough, with nrefinements = 1. 
+
+# Number of training samples:
+ntraindata = 70
+
+# Name of the file containing the training samples:
+#train_filename = "./../data/LinspacedTrainingSet70.dat"
+
+# Number of test samples:
+ntestdata = 30
+
+# Name of the file containing the test samples:
+#test_filename = "./../data/LinspacedTestSet300.dat"
+
+# Number of layers:
+nlayers = 9
+
+# Name of the file containing the architecture of the net:
+#architecture_filename = "./../data/architecture.dat"
+
+# (Initial) learning rate:
+alpha = 0.01
+
+# Maximum number of training iterations:
+niter = 50000
+
+# (Initial) Tolerance (for convergence check):
+tol = 0.0001
+
+# Weights optimizer:
+# 0 = Gradient descent
+# 1 = Gradient descent with momentum
+# 2 = RMS prop
+# 3 = Adam
+# 4 = AdaMax
+W_opt = 4
+
+# biases optimizer (values as above):
+b_opt = 3
+
+# Number of refinements for alpha decay:
+nref = 3
+
+# Name of the file containing the predicted output:
+#prevision_filename = "./../data/yhat.dat"
+\end{lstlisting}
+It's worth noting that not increasing the net size not necessarily results in a better performance. For example, if it is used as architecture {\ttfamily \{1, 14, 12, 11, 15, 11, 14, 13, 15, 12, 1\}}, that corresponds to a 1 reading and 10 working layers, the hidden ones with a random number of nodes between 11 and 15, the output on the same dataset is:\\
+{\\ \ttfamily 
+Cost functional on the training set = 2.23205e-07\\
+Relative L2 error on test set = 0.0238545\\
+Output written on ./../data/yhat30.dat\\
+\\}
+meaning that the net is starting to overfit the training data, and thus to have difficulties to generalize to the unseen test data; on the contrary, if we take a more complex function, e.g. one with more oscillations, a deeper and bigger network will be needed to obtain good results. In very extreme underfitting and overfitting case, even NaNs and Infs can be appear; in general the procedure is to start with a smaller network, since in this case the result is produced faster, and then to add layers and nodes until the results starts to get worse.
 \section{Final remarks} 
 %minimal_output e string--> problema di getpot, almeno su questa architettura. prova anche su ubuntu e moduli nuovi.
-%c++14 during development perché auto trailing return spesso. Poi rimosso, credo ovunque, per chiarezza/leggibilità. Mantenuto c++14 perché è stato sviluppato così, ma funziona anche con c++11 (prova). 
+%c++14 during development perché auto trailing return spesso. Poi rimosso, credo ovunque, per chiarezza/leggibilità. Mantenuto c++14 perché è stato sviluppato così, ma funziona anche con c++11 (prova).
+%muparser per la funzione (lambda) in write_set.cpp? 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -5,21 +5,18 @@
 # When tuning the net, it's better to start from alpha and architecture
 # keeping others parameters s.t. the program runs long enough, with
 # nrefinements = 1. 
-# The test set should have just enough data to check the performance 
-# of the net, so for very larger set different proportions wrt train 
-# set numerosity could be tried.
 
 # Number of training samples:
 ntraindata = 70
 
 # Name of the file containing the training samples:
-#train_filename = "./../data/LinspacedTrainingSet.dat"
+#train_filename = "./../data/LinspacedTrainingSet70.dat"
 
 # Number of test samples:
 ntestdata = 300
 
 # Name of the file containing the test samples:
-#test_filename = "./../data/LinspacedTestSet.dat"
+#test_filename = "./../data/LinspacedTestSet300.dat"
 
 # Number of layers:
 nlayers = 9
@@ -52,4 +49,3 @@ nref = 3
 
 # Name of the file containing the predicted output:
 #prevision_filename = "./../data/yhat.dat"
-
