@@ -1,3 +1,3 @@
-plot "LinspacedTestSet.dat"	u 1:2 w lp lw 3 title "Test set", \
-			"< paste LinspacedTestSet.dat yhat.dat" u 1:3 w lp lw 2 title "Prevision"
+plot "LinspacedTestSet300.dat"	u 1:2 w lp lw 4 title "Test Data", \
+			"< paste LinspacedTestSet300.dat yhat300.dat" u 1:3 w lp lw 1.5 title "Prevision"
 pause mouse "Click any mouse button on selected data point to close\n"
