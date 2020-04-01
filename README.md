@@ -6,11 +6,9 @@ Author: Paolo Joseph Baioni
 
 Mailto: paolojoseph.baioni@mail.polimi.it
 
-Development is still ongoing, at the moment of writing:
-
 The repo contains 4 directories:
- - data, containing input data, output data, plots and
-   gnuplot script to generate them
+ - data, containing input data, output data, and gnuplot scripts
+   to generate graph from them
  - doc, containing documentation of the code and of the
    adopted mathematical methodology
  - include, containing header files which have to been included,
@@ -40,7 +38,7 @@ If you don't use modules, you need a c++ compiler (only gcc tested, versions:
 see https://eigen.tuxfamily.org, and the Boost libraries required by 
 gnuplot-iostream (tested version: 1.63.0, 1.72.0), see 
 ./include/gnuplot-iostream.hpp and https://www.boost.org/
-Moreover in this case the "include" preprocessor options (-I./path/to/dir)
+Moreover in this case the "include" preprocessor options (-I/path/to/dir/)
 have to be modified to point to the correct path, both in Makefile and
 during the compilation of write_set.cpp.
 
