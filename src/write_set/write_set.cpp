@@ -23,18 +23,18 @@ ostream & help(){
 	cout<<"Run with ./a.out [options]\n";
 	cout<<"Options:\n-h, --help: print this help\n";
 	cout<<"-p, --parameters <filename>: reads parameters from <filename>,\n";
-	cout<<"          default filename = \"./../../data/parameters.pot\" ";
+	cout<<"          default filename = \"./../../data/parameters.pot\"\n ";
 	return cout;
 }
 
 
 int main(int argc, char** argv){
-	GetPot commandline(argc,argv);
-	string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
+	GetPot commandline(argc,argv); cout<<endl;
 	if(commandline.search(2,"-h","--help")){
 		help()<<endl;
 		return 0;
 	}
+	string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
 	GetPot datafile(param_filename.c_str());
 	const size_t ntrain = datafile("ntraindata", 70);
 	const size_t ntest = datafile("ntestdata", 30);

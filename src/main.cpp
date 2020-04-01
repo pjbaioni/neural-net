@@ -46,7 +46,7 @@ ostream & help(){
 	cout<<"Run with ./main.out [options]\n";
 	cout<<"Options:\n-h, --help: print this help\n-v, --verbose: activate verbose mode\n";
 	cout<<"-p, --parameters <filename>: reads parameters from <filename>,\n";
-	cout<<"                     default filename = \"./../data/parameters.pot\" ";
+	cout<<"          default filename = \"./../data/parameters.pot\"\n ";
 	return cout;
 }
 
