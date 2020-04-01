@@ -3,7 +3,7 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
-
+#include <iostream>
 #include "GetPot.hpp"
 
 using namespace std;
@@ -19,8 +19,23 @@ void write_set(string filename, const VectorXd & X, const char & separator = ' '
 	ofs.close();
 }
 
-int main(){
-	GetPot datafile("./../../data/parameters.pot");
+ostream & help(){
+	cout<<"Run with ./a.out [options]\n";
+	cout<<"Options:\n-h, --help: print this help\n";
+	cout<<"-p, --parameters <filename>: reads parameters from <filename>,\n";
+	cout<<"          default filename = \"./../../data/parameters.pot\" ";
+	return cout;
+}
+
+
+int main(int argc, char** argv){
+	GetPot commandline(argc,argv);
+	string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
+	if(commandline.search(2,"-h","--help")){
+		help()<<endl;
+		return 0;
+	}
+	GetPot datafile(param_filename.c_str());
 	const size_t ntrain = datafile("ntraindata", 70);
 	const size_t ntest = datafile("ntestdata", 30);
 	VectorXd X;

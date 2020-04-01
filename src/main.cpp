@@ -6,8 +6,6 @@
 #include "GetPot.hpp"
 #include "gnuplot-iostream.hpp"
 
-//The following have to be removed once i/o stuff
-//will be defined in proper files
 #include <fstream>
 #include <sstream>
 
@@ -15,17 +13,20 @@ using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-//To be moved:
 template <typename T> //T has to be a matrix which overloads the call operator for indexing
-void read_set(const string& setname, T & M, const char & separator=' '){
+bool read_set(const string& setname, T & M, const char & separator=' '){
 	ifstream in(setname);
-	if(!in) cerr<<"Error in opening: "<<setname<<std::endl; //add a proper exit...try,catch...or just go to default
+	if(!in){
+		cerr<<"Error in opening: "<<setname<<std::endl;
+		return false;
+	}
 	string riga,numero;
 	for(size_t i=0; getline(in,riga); ++i){
 		istringstream rigastream(riga);
 		for(size_t j=0; getline(rigastream,numero,separator); ++j)
 			M(i,j)=stod(numero);
 	}
+	return true;
 }
 
 ostream & write_vector(const string & ofsname, const VectorXd & X){
@@ -40,12 +41,11 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 	return cout;
 } 
 
-//To be kept:
 
 ostream & help(){
 	cout<<"Run with ./main.out [options]\n";
-	cout<<"Options:\n[-h], [--help]: print this help\n[-v], [--verbose]: activate verbose mode\n";
-	cout<<"[-p], [--parameters] <filename>: reads parameters from <filename>,\n";
+	cout<<"Options:\n-h, --help: print this help\n-v, --verbose: activate verbose mode\n";
+	cout<<"-p, --parameters <filename>: reads parameters from <filename>,\n";
 	cout<<"                     default filename = \"./../data/parameters.pot\" ";
 	return cout;
 }
@@ -79,21 +79,24 @@ int main(int argc, char** argv){
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
-	read_set(train_filename,TrainData);
+	bool read=read_set(train_filename,TrainData);
+	if(!read) return -1;
 
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
-	read_set(architecture_filename,architecture);
+	read=read_set(architecture_filename,architecture);
+	if(!read) return -1;
 	
 	//Construct the net:
 	NeuralNetwork nn(architecture);
 	
 	//Train the net:
-	nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref,verbose); //should take verbose to turn on/off some output
+	nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref,verbose);
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
-	read_set(test_filename,TestData);
+	read=read_set(test_filename,TestData);
+	if(!read) return -1;
 	
 	//Test the net:
 	VectorXd yhat;
@@ -110,10 +113,10 @@ int main(int argc, char** argv){
 	VectorXd::Map(&xtest[0], ntestdata) = TestData.col(0);
 	VectorXd::Map(&ytest[0], ntestdata) = TestData.col(1);
 	//second way
-	vector<double> prev(yhat.data(), yhat.data() + yhat.rows()*yhat.cols());
+	vector<double> prevision(yhat.data(), yhat.data() + yhat.rows()*yhat.cols());
 	//plot:
 	gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
-  "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prev))<<
+  "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prevision))<<
   "w lp lw 1.5 title 'Prevision'"<<endl;
 	
 	return 0;
