@@ -941,7 +941,7 @@ public:
 };
 \end{lstlisting}
 Notice that the epsilon member could have been avoided if multiple inheritance were used.
-\section{Write\_set and data}
+\section{Write\_set and datasets}
 The src/write\_set folder contains the source file write\_set.cpp, which is used to generate the training and test datasets.\\
 This is the first source file to rely to GetPot for the input phase:
 \begin{lstlisting}[frame=single, showstringspaces=false]
@@ -971,7 +971,7 @@ Options:\\
 -h, --help: print this help\\
 -p, --parameters <filename>: reads parameters from <filename>,\\
           default filename = "./../../data/parameters.pot"\\\\}
-and returns; otherwise it reads the number of training and test samples from the parameters file, which can thus be changed without recompiling the program. The two datasets are then generated calling the following function:
+and returns; otherwise it reads the number of training and test samples from the parameters file, which can thus be changed without recompiling the program. The two datasets are then generated calling the following function, which currently generate a wave-packet-like function:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 constexpr double pi=4.*std::atan(1.);
 void write_set(string filename, const VectorXd & X, const char & separator = ' '){
@@ -993,7 +993,119 @@ Click any mouse button on selected data point to close}
 \end{figure}
 
 \section{The main}
+The {\ttfamily main.cpp} source file takes into account for both execution of the main program and input/output operations.\\
+The input stage is managed analogously to {\ttfamily write\_set.cpp}, so for example we have:\\
+{\\ \ttfamily 
+	\$ ./main.out -h\\
+	Run with ./main.out [options]\\
+	Options:\\
+	-h, --help: print this help\\
+	-v, --verbose: activate verbose mode\\
+	-p, --parameters <filename>: reads parameters from <filename>,\\
+	default filename = "./../data/parameters.pot"\\
+	 \\}
+So after a first GetPot based input phase, the training dataset and the architecture of the neural network are loaded:
+\begin{lstlisting}[frame=single]
+//Load the training data:
+MatrixXd TrainData(ntraindata,2);
+bool read=read_set(train_filename,TrainData);
+if(!read) return -1;
 
+//Load the net architecture:
+VectorXs architecture(nlayers);
+read=read_set(architecture_filename,architecture);
+if(!read) return -1;
+\end{lstlisting}
+Since the reading has to work both with matrices and vectors, the read\_set function has been implemented as a function template, so to work with any matrix-like type which implements the overload of the call operator for accessing the elements:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+template <typename T> 
+bool read_set(const string& setname, T & M, const char & separator=' '){
+
+	ifstream in(setname);
+	if(!in){
+	cerr<<"Error in opening: "<<setname<<std::endl;
+	return false;
+	}
+
+	string riga,numero;
+	for(size_t i=0; getline(in,riga); ++i){
+		istringstream rigastream(riga);
+		for(size_t j=0;getline(rigastream,numero,separator);++j)
+			M(i,j)=stod(numero);
+	}
+	return true;
+}
+\end{lstlisting}
+After that, the network is constructed following the ``architecture.dat" file instructions, calling the constructor of the NeuralNetwork class, trained and tested:
+\begin{lstlisting}[frame=single]
+//Construct the net:
+NeuralNetwork nn(architecture);
+
+//Train the net:
+nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref,verbose);
+
+//Load the test data:
+MatrixXd TestData(ntestdata,2);
+read=read_set(test_filename,TestData);
+if(!read) return -1;
+
+//Test the net:
+VectorXd yhat;
+double errL2;
+tie(yhat,errL2)=nn.test(TestData);
+\end{lstlisting}
+The training results are printed to the standard output by the {\ttfamily train()} function itself, by default only in a synthetic way if the {\ttfamily --verbose} option is not passed to main. \\
+Differently, the test results are printed later, both in a written and graphical way. \\
+First the numerical results are output on the terminal window and the solution is saved in the prevision file, which by default is data/yhat300.dat:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+//Print the results:
+cout<<"Relative L2 error on test set = "<<errL2<<endl;
+write_vector(prevision_filename,yhat)<<"\n"<<endl;
+\end{lstlisting}
+by means of the {\ttfamily write\_vector()} function:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+ostream & write_vector(const string & ofsname, const VectorXd & X){
+	ofstream out_file(ofsname);
+	streambuf* stream_buffer_cout = cout.rdbuf();
+	streambuf* stream_buffer_file = out_file.rdbuf();
+	cout.rdbuf(stream_buffer_file);
+	cout<<X;
+	out_file.close();
+	cout.rdbuf(stream_buffer_cout);
+	cout<<"Output written on "<<ofsname;
+	return cout;
+} 
+\end{lstlisting}
+which redirect the {\ttfamily std::cout} stream buffer to the output file one (and then restore it) to save the y-coordinate of the predicted function.\\ 
+%This steps results in an output like the following:\\
+%{\\ \ttfamily 
+%	\$ ./main.out\\
+%	Total iterations = 16766\\
+%	Cost functional on the training set = 0.000157491\\
+%	Relative L2 error on test set = 0.00702565\\
+%	Output written on ./../data/yhat300.dat\\
+%	\\}
+In the end, before returning the control to the terminal user, the predicted function is plotted at screen together with the correct solution, given by the test dataset, using the gnuplot-iostream utility:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+Gnuplot gp;
+//first way:
+vector<double> xtest(TestData.rows()),ytest(TestData.rows());
+VectorXd::Map(&xtest[0], ntestdata) = TestData.col(0);
+VectorXd::Map(&ytest[0], ntestdata) = TestData.col(1);
+//second way
+vector<double> prevision(yhat.data(), yhat.data() + yhat.rows()*yhat.cols());
+//plot:
+gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
+"w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prevision))<<
+"w lp lw 1.5 title 'Prevision'"<<endl;
+\end{lstlisting}
+It's also possible to plot again this last graph without executing again the main program, indeed the data folder contains a ``PlotPrevision.gnu" gnuplot script too, which use the {\ttfamily paste}\footnote{ see e.g. {\ttfamily \$ man paste}} gnu coreutil to avoid duplicates of the x-coordinate:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+plot "LinspacedTestSet300.dat"	u 1:2 w lp lw 4 title "Test Data", \
+"< paste LinspacedTestSet300.dat yhat300.dat" u 1:3 w lp lw 1.5 title "Prevision"
+pause mouse "Click any mouse button on selected data point to close\n"
+\end{lstlisting}
+Currently some functionalities, like adding the grid to the graph, are possible only when the script is used, due to gnuplot-iostream limitations.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
