@@ -1248,20 +1248,11 @@ Some parameters can be changed editing the ``parameters.pot" file (or another on
 # Number of training samples:
 ntraindata = 70
 
-# Name of the file containing the training samples:
-#train_filename = "./../data/LinspacedTrainingSet70.dat"
-
 # Number of test samples:
 ntestdata = 30
 
-# Name of the file containing the test samples:
-#test_filename = "./../data/LinspacedTestSet300.dat"
-
 # Number of layers:
 nlayers = 9
-
-# Name of the file containing the architecture of the net:
-#architecture_filename = "./../data/architecture.dat"
 
 # (Initial) learning rate:
 alpha = 0.01
@@ -1285,9 +1276,6 @@ b_opt = 3
 
 # Number of refinements for alpha decay:
 nref = 3
-
-# Name of the file containing the predicted output:
-#prevision_filename = "./../data/yhat.dat"
 \end{lstlisting}
 It's worth noting that not increasing the net size not necessarily results in a better performance. For example, if it is used as architecture {\ttfamily \{1, 14, 12, 11, 15, 11, 14, 13, 15, 12, 1\}}, that corresponds to a 1 reading and 10 working layers, the hidden ones with a random number of nodes between 11 and 15, the output on the same dataset is:\\
 {\\ \ttfamily 
@@ -1295,18 +1283,22 @@ Cost functional on the training set = 2.23205e-07\\
 Relative L2 error on test set = 0.0238545\\
 Output written on ./../data/yhat30.dat\\
 \\}
-meaning that the net is starting to overfit the training data, and thus to have difficulties to generalize to the unseen test data; on the contrary, if we take a more complex function, e.g. one with more oscillations, a deeper and bigger network will be needed to obtain good results. In very extreme underfitting and overfitting case, even NaNs and Infs can be appear; in general the procedure is to start with a smaller network, since in this case the result is produced faster, and then to add layers and nodes until the results starts to get worse.
-\section{Final remarks} 
-%minimal_output e string--> problema di getpot, almeno su questa architettura. prova anche su ubuntu e moduli nuovi.
-%c++14 during development perché auto trailing return spesso. Poi rimosso, credo ovunque, per chiarezza/leggibilità. Mantenuto c++14 perché è stato sviluppato così, ma funziona anche con c++11 (prova).
-%muparser per la funzione (lambda) in write_set.cpp? 
+meaning that the net is starting to overfit the training data, and thus to have difficulties to generalize to the unseen test data; on the contrary, if we take a more complex function, e.g. one with more oscillations, a deeper and bigger network will be needed to obtain good results.\\
+In very extreme underfitting and overfitting case, even NaNs and Infs can be appear, so in general a good procedure is to start with a smaller network, since in this case the result is produced faster, and then to add layers and nodes until the results starts to get worse.\\
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\chapter*{Conclusions and further developments}
-\addcontentsline{toc}{chapter}{Conclusions and further developments}
+\chapter*{Conclusions}
+\addcontentsline{toc}{chapter}{Conclusions}
+In the \hyperref[chapter1]{first chapter} of this report we have illustrated in detail the mechanism behind deep learning, going also over the surface for what concerns typical problems one encounters when designing a deep neural network, such as hyperparameter tuning and overfitting, proposing solutions like $L_2$ regularization and dropout and giving an idea of the scheme one can follow when tuning the network. Moreover we've showed how gradient descent can be extended to tackle deep learning problems, till arriving to Adam and AdaMax, which have been proposed the first time in 2015 and which are now employed in many different situations.\\
+In chapter \ref{chapter2} we have showed two main techniques which can be used to face PDEs problems by means of deep neural networks, as some interesting and useful theoretical results, following the most recent articles and reporting pros, like the ease of extension to more dimensions, aspects that require some care, like the treatment of BCs, and problems that are still open, in general related to the lack of a theoretical framework, implying among the others uncertainty about theoretical error bounds and appropriate values of hyperparameters.\\
+In chapters \ref{chapter3} and \ref{chapter4} we have focused on explaining how to develop from scratch a DNN based efficient and numerical analysis relevant application, exposing both the technicalities of the adopted algorithms and the design choices that have been taken, both in the details of the implementation and in the general architecture of the program. After this a complete benchmark case  has been presented, accompanied by comprehensive instructions on how to build and run the program.\\
+Before concluding, we notice that it isn't uncommon to find comparisons between results achievable with DNNs metods and FEMs, e.g. \cite{Jinchao} prove that in a 1D specific example a ReLU DNN can recover a better result, in terms of convergence accuracy, than adaptive finite element method. In such comparisons it's worth considering that the time required by a DNN-like approach is very different from the one of standard methods, indeed from one side tuning a DNN program properly requires a great amount of time, because even hyperparameters which have given great result in one field of application are often completely not suitable to the others, so a large number of combinations have to be tried; from the other side, once tuned and trained, the DNN is ready perform different test, and so to make all the predictions needed, just at the price of one forward propagation, while the FEM solver has to work every time from scratch.\\ 
+Considering all these aspect, we can certainly conclude that deep learning is a very promising and interesting field even for numerical analysis, both from the theoretical and from the applications point of view.\\
+Moreover, its completely specific time scales makes it particularly adapt to find its natural space in the standard procedure of computational science and engineering: if we have an engineering machine or a scientific experiment on which we have to able to operate in very short times, for example to perform rapid slight changes to the configuration in response to sudden perturbations so to guarantee the stability of the system, we start proceeding with the mathematical modeling of the physical problem, we analyze it theoretically and then we move to numerical analysis and finally to programming for example a FEM code. At this point we can design a DNN based solver which we train on the solutions we have found with traditional methods. In this way we end up with a software which is able to find in very short times, the time of just one forward propagation, solutions to the model when the data, i.e. the physical situation, has changed a little, providing in such a way a powerful tool for the real-time control of the state of the machine or of the experiment.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

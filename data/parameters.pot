@@ -9,20 +9,11 @@
 # Number of training samples:
 ntraindata = 70
 
-# Name of the file containing the training samples:
-#train_filename = "./../data/LinspacedTrainingSet70.dat"
-
 # Number of test samples:
 ntestdata = 300
 
-# Name of the file containing the test samples:
-#test_filename = "./../data/LinspacedTestSet300.dat"
-
 # Number of layers:
 nlayers = 9
-
-# Name of the file containing the architecture of the net:
-#architecture_filename = "./../data/architecture.dat"
 
 # (Initial) learning rate:
 alpha = 0.01
@@ -46,6 +37,3 @@ b_opt = 3
 
 # Number of refinements for alpha decay:
 nref = 3
-
-# Name of the file containing the predicted output:
-#prevision_filename = "./../data/yhat.dat"
