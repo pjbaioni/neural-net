@@ -11,7 +11,7 @@ OPTIONS=minimal_output
 main.o: $(HEADERS) $(SRCS)
 NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
 
-.PHONY: all build clean distclean help run
+.PHONY: all build clean distclean run
 
 .DEFAULT_GOAL = build
 
@@ -30,6 +30,3 @@ distclean: clean
 
 run:
 	./$(EXE) $(OPTIONS)
-
-help:
-	./$(EXE) "--help"
