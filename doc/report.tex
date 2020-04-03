@@ -83,9 +83,9 @@ The recent advances in machine learning (ML) and the successes obtained by the a
 The aim of this project is to get into deep learning techniques and study their  possible applications to PDEs, also reporting some useful theoretical results, as a complement to the methods illustrated during the NAPDE course, and to implement from scratch a Numerical Analysis relevant Neural Networks based C++ program, so to both gain and verify a low-level, detailed and complete understanding of the method and to experiment on some of the programming techniques that have been deepened during the APSC and \textit{``Strumenti di sviluppo e distribuzione di software per la ricerca scientifica''} courses held at PoliMi.\\
 The structure of the report is as follows.\\
 In chapter \ref{chapter1} we present the general architecture of a Deep Neural Network (DNN) and the main idea of functioning of the algorithm that allows it to learn from the data (Deep Learning), consisting of two phases, called \textit{forward propagation} and \textit{backward propagation}. Therefore, some  sector-specific issues are considered in detail, such as: distinction between train, development and test sets, problems related to overfitting, possible regularization techniques aimed at reducing it, different optimization algorithms and an overview of the main parameters that must be tuned adequately to get good results.\\
-In chapter \ref{chapter2} two possible approaches to solving PDEs via DNNs are exposed, also highlighting some choices that can be made in the formulation of the problem and in treating the boundary conditions. We then deepen the comparison between DNNs and the piecewise continuous linear function which are used as bases of finite element spaces of order one, in order to provide a greater intuition of the reasons why the DNN-based method works and to identify, albeit in this particular case, some general indications on the ideal number of nodes and layers of the DNN.\\
-In chapter \ref{chapter3} we explain the programming architectural choices and the structure of the developed code, freely available on {GitHub\footnote{\href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}}, as well as possible extensions.\\
-In chapter \ref{chapter4}, after providing instructions on how to compile, link and run the program, we show some examples by means of benchmark cases.\\
+In chapter \ref{chapter2} two possible approaches to solving PDEs via DNNs are exposed, also highlighting some choices that can be made in the formulation of the problem and in the treatment of the boundary conditions. We then deepen the comparison between DNNs and the piecewise continuous linear function which are used as bases of finite element spaces of order one, in order to provide a greater intuition of the reasons why the DNN-based method works and to identify, albeit in this particular case, some indications on the ideal number of nodes and layers of the DNN.\\
+In chapter \ref{chapter3} we explain the programming architectural choices that have been taken during the development of the code and we illustrate its structure and some of the content of its main files, also providing some insights with respect to the actual implementation of the previously stated theory and methods.\\
+In chapter \ref{chapter4} instructions on how to obtain\footnote{The code is freely available on GitHub: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}}, compile, link and run the program are given, as well as a complete benchmark case, which serve both as test example to verify the correct functioning of the code and also as opportunity to generalize a little bit and speak about the possible behavior of the neural net when settings are changed.\\
 In \hyperref[appendix]{appendix} we report the \cite{freefem++} code written for the computations performed in section \ref{section2.2}.
 
 
@@ -94,16 +94,16 @@ In \hyperref[appendix]{appendix} we report the \cite{freefem++} code written for
 
 
 \chapter{Neural Networks and Deep Learning}\label{chapter1}
-In this chapter we give an introduction to an emerging branch of artificial intelligence which is called \textit{Deep Learning}, and we focus in particular to how to build a \textit{Deep Neural Network} (DNN). Despite this introduction being general, it is not intended to be complete: only the tools relevant for the subsequent chapters are here developed.\\
+In this chapter we give an introduction to an emerging branch of artificial intelligence which is called \textit{Deep Learning}, and we focus in particular to how to build a \textit{Deep Neural Network} (DNN). Despite this introduction being general, not application-focused, it is not intended to be complete: only the tools relevant for the subsequent chapters are here developed.\\
 In the section \ref{section1.1} we explain foundations of neural networks, with the aim of showing how to build a simple DNN and how to train it on data.\\
-In the section \ref{section1.2} we talk about some, in a certain sense more practical, aspects of constructing a DNN, which in turn really make the difference in making the algorithm effective. Indeed it turns out that in order to build up a DNN which actually performs well it is necessary to consider with care: the tuning of \textit{hyperparameters}, that are the parameters which are not being optimized by the neural network, the problems arising from over/under-fitting of the data and the techniques used to deal with them, which go under the name of \textit{regularization}, as well as different optimization algorithms, which can become very relevant in order to not being stuck in a local minima.\\
-
+In the section \ref{section1.2} we talk about some, in a certain sense more specific, aspects of constructing a DNN, which in turn really make the difference in making the algorithm effective. Indeed it turns out that in order to build up a DNN which actually performs well it is necessary to consider with care: the tuning of \textit{hyperparameters}, that are the parameters which are not being optimized by the neural network, the problems arising from over/under-fitting of the data and the techniques used to deal with them, which go under the name of \textit{regularization}, as well as different optimization algorithms, which can become very relevant in order to not remain stuck in a local minima.\\
+\newpage
 \section{Architecture and operation of a Deep Neural Network}\label{section1.1}
 The very fundamental unit which compose every neural network is the \textit{node} or \textit{neuron}, that is a structure that takes some input features, performs a specific transformation on them, and gives the output:
 \begin{figure}[H]
 \centering
 \includegraphics[width=10cm]{img/node}
-\caption{}\label{fig1}
+\caption{Node}\label{fig1}
 \end{figure}
 \noindent To gain an intuition of what a node is really doing, it's useful to get a more precise idea of a possible problem we could want to face with our node and of an appropriate map $f:X\rightarrow Y$ we might want to use.
 \begin{Example}\label{example1}
@@ -117,7 +117,7 @@ Consider a given dataset $\{(x_i,y_i)\}$ like the one in the next picture, and s
 \[
 y=wx + b
 \]
-for some $w,b$; let's call this linear transformation $L\!: \, Lx=wx+b$. Now suppose that the output $y$ has a constrain, e.g. that $y\ge0$ must hold\footnote{The reason why non linear function like the one arising from this constrain are needed in deep learning will be seen in the end of this section.} $ \forall y $. Then it would be reasonable to update the $f$ function as in the figure below:
+for some $w,b$; let's call this linear transformation $L\!: \, Lx=wx+b$. Now suppose that the output $y$ has a constrain, e.g. that $y\ge0$ must hold $ \forall y $.\footnote{The reason why non linear function like the one arising from this constrain are needed in deep learning will be seen in the end of this section.} Then it would be reasonable to update the $f$ function as in the figure below:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=7.5cm]{img/regression2} 
@@ -140,12 +140,12 @@ Following the literature we call \textit{Hidden layer} every intermediate layer,
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\textwidth]{img/neuralnet}
-\caption{}\label{neuralnet}
+\caption{Neural network}\label{neuralnet}
 \end{figure}
 \noindent In deep learning the above mentioned process that brings the input to the output, passing by all the intermediate layers, is called \textit{forward propagation}, or, in short, forprop, and constitute the first part of the training algorithm of a neural network.\\
-\newline \noindent One surprising aspect of neural networks is that they don't require their designer to decide which node of the first layer takes which part of the input, nor which nodes of the $n\!-\!th$ layer a generic node of the $(n+1)\!-\!th$ layer should consider, neither how much importance any node should give to each of its inputs. In fact, he gives all the inputs to every node, and let the neural network find it out by itself. In other words, given enough training example, i.e. enough $(x_i,y_i)$ known couples, neural networks are remarkably good at figuring out how to map unknown $x$ to the right $y$.\\
+\newline \noindent One surprising aspect of neural networks is that they don't require their designer to decide which node of the first layer takes which part of the input, nor which nodes of the $n\!-\!th$ layer a generic node of the $(n+1)\!-\!th$ layer should consider, neither how much importance any node should give to each of its inputs. In fact, he gives all the inputs to every node, and lets the neural network find it out by itself. In other words, given enough training samples, i.e. enough $(x_i,y_i)$ known couples, neural networks are remarkably good at figuring out how to map unknown $x$ to the right $y$.\\
 This capability is achieved by means of the second main idea of neural networks: what is called \textit{back propagation}, or backprop.\\
-Let's consider again the single node as in figure \ref{fig1}, with $y=ReLU(wx+b)$. More precisely in this case we have:
+Let's consider again the single node as in Figure \ref{fig1}, with $y=ReLU(wx+b)$. More precisely in this case we have:
 \begin{equation}\label{linear}
 L=\bm{w \cdot x} + b
 \end{equation}
@@ -166,16 +166,16 @@ b \,\,\leftarrow b\,\, - \,\,\alpha \frac{dC}{db}
 \end{equation}
 where $\alpha$ is a, typically small, positive real number, which controls how fast we update our weights, and is thus called \textit{learning rate}.\\
 The learning process is thus construct as a loop composed by forward propagation followed by backward propagation, with this sequence being repeated until the cost reaches a satisfying value.\\
-Coming back to a full DNN, i.e. to a neural network with more than one hidden layer like the one in figure \ref{neuralnet}, it's easy to generalize the above algorithm.\\
+Coming back to a full DNN, i.e. to a neural network with more than one hidden layer like the one in Figure \ref{neuralnet}, it's easy to generalize the above algorithm.\\
 Let's suppose we have a large enough dataset of $x_i$ with the corresponding $y_j$, and divided it in two disjoint subset, the \textit{training set} and the \textit{test set}.\\
 We initialize all the weights randomly, and we start the loop, called \textit{training loop}, over the training set.\\
 First we have forward propagation:
 \begin{itemize}
-\item every node of the input layer takes all the data as input, performs an affinity like the one in \eqref{linear} using it's own weights and bias, non-linearize the result through an activation function like the ReLU, and sends it's output to every node of the next layer;
-\item every node of the hidden layers takes as input all the outputs coming from the previous layer, performs a weighted sum of them and adds a bias, using it's own parameters, and outputs the activated result to each node of the next layer;
-\item the nodes in the last layer usually calculate only the linear transformation and outputs the predicted result.
+\item every node of the input layer takes all the data as input, performs an affinity like the one in \eqref{linear} using its own weights and bias, non-linearizes the result through an activation function like the ReLU, and sends it's output to every node of the next layer;
+\item every node of the hidden layers takes as input all the outputs coming from the previous layer, performs a weighted sum of them and adds a bias, using its own parameters, and outputs the activated result to each node of the next layer;
+\item the nodes in the last layer usually calculate only the linear transformation and outputs the predicted result.\footnote{Unless a binary classification program is being run: in that case it's ok to activate the last layer output too. Further insights will be given later on.}
 \end{itemize}
-At this point we calculate the value of the cost functional, and then we start backprop, in which every node, starting from the ones inside the last layer, calculate the gradients of the cost w.r.t. it's own parameters $w,b$ and updates them using an algorithm like gradient descent. Once we have updated all the parameters till the first layers we do another iteration of the algorithm.\\
+At this point we calculate the value of the cost functional, and then we start backprop, in which every node, starting from the ones inside the last layer, calculate the gradients of the cost w.r.t. its own parameters $w,b$ and updates them using an algorithm like gradient descent. Once we have updated all the parameters till the first layers we do another iteration of the algorithm.\\
 When we are satisfied of the performance of our neural network, we do \textit{only one} forward propagation step, keeping the optimal parameters, but using the test set, and we evaluate the accuracy of the results.\\
 \newline
 \noindent Before going on with the discussion of deeper aspects of deep learning, we show why some of the choices made in the design of the neural network and of the algorithm are appropriate.\\
@@ -190,13 +190,13 @@ A_l=W_l(W_{l-1}A_{l-2} + b_{l-1})+ b_l = W_lW_{l-1}A_{l-2}+W_lb_{l-1}+b_l =: W'_
 By recursion is then easy to prove that in the end with a complete step of forward propagation we are computing only a linear combination of the initial data, as we would do in a much simpler way with just one node.\\
 In this report we focus mainly on $tanh(\cdot)$ and ReLU activation functions, which are both very common choices, but others are being investigated as well.\\
 For similar reasons it is very important to initialize the weights randomly: if we don't, and, for example, we initialize every parameter to a given value, then at the very first iteration all the nodes in the same layer are computing the very same output, and moreover are being updated at the same way during backward propagation. In the end this result in having a DNN that produces the same output of one which has just one node per layer.\\
-Finally, it's worth noting that deep neural networks turn out to be more effective than bigger shallow neural networks in reconstructing and predicting complex behavior, especially when it is decomposable in a hierarchical grade of complexity, and that a minimum number of hidden layer is sometimes necessary. We don't prove it, but we will give a quantitative result of a comparison in section \ref{section2.2}, despite in a specific case.
+Finally, it's worth noting that deep neural networks turn out to be more effective than bigger shallow neural networks in reconstructing and predicting complex behavior, especially when it is decomposable in a hierarchical grade of complexity, and that a minimum number of hidden layer is sometimes necessary. We don't prove it, but we will give a quantitative result of a comparison in section \ref{section2.2}, despite in the specific case of reconstruction of continuous piecewise linear functions.
 
 
 \section{Further insights}\label{section1.2}
 When designing a neural network, a great number of choices have to be taken: the number of layers, of nodes, the value of the learning rate, the kind of activation function... Moreover what can be a good setting in one field usually isn't that good in another, making DNN programming a very iterative process. \\
 Before getting into it, it's useful to split the data in three sets: the training set, containing the most of the data, the development set and the test set. Then, the first thing to do is to evaluate the performance of the network on the training set: if the error on it is high it means that the network is underfitting the data\footnote{This situation is known in the literature as ``high bias".}, and increasing the size of the network or training it longer could be possible tries. Once the error on the training set is low enough we look at the performance on the dev set. If it is low we've done, otherwise it means that in the previous stage we have overfitted the data\footnote{Also described as a ``high variance" situation.}, that is we have tuned the DNN so much on the training data that it has difficulties to generalize to new ones. In this case we can try to get more data and/ore to use regularization techniques, which are the topic of the next paragraph. It's important to notice that once this modification are done, we've to start again from the beginning and check if the error on the training test is still low enough.\\
-Once we have reached a reasonably good result on bot sets, we can finally verify the robustness of our network on the test set, which will give us an unbiased estimation, not having been used still.\\
+Once we have reached a reasonably good result on bot sets, we can finally verify the robustness of our network on the test set, which will give us an unbiased estimation, not having been used yet.\\
 This iterative process is resumed in the following flowchart:
 \begin{figure}[H]
 	\centering
@@ -215,8 +215,8 @@ where $||\cdot||_F$ indicates the Frobenius norm, $L$ the number of layers and  
 A_l=W_lA_{l-1}+b_l
 \]
 helps keeping the layers more linear, since the activation functions usually have a \textit{tanh}-like form. In both cases $L_2$ regularization force the network to take simpler ``decisions", reducing so the overfitting.\\
-Another famous technique is \textit{dropout}, which consist in selecting a different random fraction of the nodes at the beginning of every training iteration, and turning them off by removing the figure \ref{neuralnet} links. In this way if we look at a single iteration we are working exactly with a smaller network, and so we are reducing overfitting, but at the same time at every iteration we are using a different network, and so we are keeping the capability of the original bigger network to fit the complexity of the data.\\
-Of course, while dropout may be useful to find weights able to generalize to data they've never seen, it is meaningful only during the training - development phase of the process, while it hasn't to be used on the test set.
+Another famous technique is \textit{dropout}, which consist in selecting a different random fraction of the nodes at the beginning of every training iteration, and turning them off by removing the Figure \ref{neuralnet} links. In this way if we look at a single iteration we are working exactly with a smaller network, and so we are reducing overfitting, but at the same time at every iteration we are using a different network, and so we are keeping the capability of the original bigger network to fit the complexity of the data.\\
+Of course, while dropout may be useful to find weights able to generalize to data they've never seen, it is meaningful to use it only during the training - development phase of the process, while it hasn't to be used on the test set.
 
 \subsection{Optimization}\label{par1.2.2}
 A large number of famous algorithms  in deep learning are based, among the others, on the generalization of the moving averages concept, that is here recalled.\\
@@ -231,7 +231,7 @@ Let's suppose we choose $\beta=0.9$, then roughly speaking \eqref{moving_average
 \newline \noindent We now introduce four algorithms: gradient descent with momentum, RMS-prop, Adam, which is based on the previous two and that from its presentation at International Conference on Learning Representations in 2015 has became increasingly popular, and its infinity-norm variant AdaMax.\\
 \newline \noindent Gradient descent with momentum is the direct application of \eqref{moving_averages} to standard gradient descent. For every iteration t:\footnote{For ease of notation, in the following the $t$ subscript is omitted and the gradient of the objective w.r.t. to a variable it's indicated as d(variable). }
 \begin{itemize}\label{momentum}
-	\item calculate dW, db
+	\item compute dW, db
 	\item update the momenta: 
 	\begin{equation}
 	\begin{cases}
@@ -247,10 +247,10 @@ Let's suppose we choose $\beta=0.9$, then roughly speaking \eqref{moving_average
 	\end{cases}
 	\end{equation}
 \end{itemize}
-The effect of the moving averages on gradient descent is a reduction of the oscillations in the path towards the optimum value of $W,b$, which in turn results in a faster convergence: as oscillations go to zero, the whole step is taken in the right direction. In other words, imagine a 2d plane with some parameters that we are optimizing on as orthogonal axis; then the situation before the addition of the momentum might be portrait as a triangle wave, instead performing averages the vertical oscillations cancel out themselves, while, if the algorithm converges to a point, the displacements to right sum up each other.\\
+The effect of the moving averages on gradient descent is a reduction of the oscillations in the path towards the optimum value of $W,b$, which in turn results in a faster convergence: as oscillations go to zero, the whole step is taken in the right direction. In other words, imagine a 2D plane with some parameters that we are optimizing taken as orthogonal axis; then the situation before the addition of the momentum might be portrait as a triangle wave, instead performing averages the vertical oscillations cancels out themselves, while, if the algorithm converges to a point, the displacements to right sum up each other.\\
 \newline \noindent RMSprop pursue the same aim, namely fastening convergence of gradient descent when there is an oscillating like behavior, but in a slightly different way:
 \begin{itemize}\label{RMSprop}
-	\item $\forall t$ calculate dW, db
+	\item $\forall t$ compute dW, db
 	\item update the momenta: 
 	\begin{equation}\label{rms_prop_s}
 	\begin{cases}
@@ -266,9 +266,9 @@ The effect of the moving averages on gradient descent is a reduction of the osci
 	\end{cases}
 	\end{equation}
 \end{itemize}
-where the superscript $2$ has to be intended element wise, and $s$ stands for square.\\
-To visualize the idea behind RMSprop let's suppose we have $dW>>db$; then in every gradient descent iteration it is as if we are taking a great step in the \textit{W} direction, and a significantly smaller one in the $b$ direction. But with RMSprop, if \textit{dW} is big and \textit{db} is small, being $\beta$ usually small, we have in turn $s_{dW}$ big and $s_{db}$ small in \eqref{rms_prop_s}, so in \eqref{rms_prop_update} we take comparable steps in both directions.\\
-As anticipated, Adam basically puts together this two algorithms, and performs a \textit{bias-correction} of the moving averages. The reference for this algorithm is the article by \cite{Kingma}, here we sketch it:
+where the superscript $2$, indicating square operation, has to be intended element wise, and $s$ stands for square.\\
+To visualize the idea behind RMSprop let's suppose to have $dW>>db$; then in every gradient descent iteration it is as if we are taking a great step in the \textit{W} direction, and a significantly smaller one in the $b$ direction. But with RMSprop, if \textit{dW} is big and \textit{db} is small, being $\beta$ usually small, we have in turn $s_{dW}$ big and $s_{db}$ small in \eqref{rms_prop_s}, so in \eqref{rms_prop_update} we take comparable steps in both directions.\\
+\newline \noindent As anticipated, Adam basically puts together this two algorithms, and performs a \textit{bias-correction} of the moving averages. The reference for this algorithm is the article by \cite{Kingma}, here we sketch it:
 \begin{itemize}\label{Adam}
 	\item gradient descent with momentum step:
 	\begin{equation*}
@@ -325,13 +325,13 @@ where $\varepsilon$ is a small positive number, used to prevent division by zero
 	\end{equation*}
 \end{itemize}
 \noindent \\Before leaving the optimization topic, it's worth mentioning the \textit{learning rate decay}, a technique which involves the progressive reduction of $\alpha$ and that is often used along with the optimization algorithms.\\
-Consider for simplicity standard gradient descent. What happens actually is that the steps are quite noisy in the taken direction, not exactly as the previous mentioned triangle wave. This doesn't give big problems at the beginning of the algorithms, but as we approach the minimum we might end up wandering for a technically not finite amount of time about it, but taking to big step to really reach it. Reducing in an appropriate way the learning rate as the iterations increase in principle doesn't eliminate this problem (unless we exactly hit the minimum), but by sure lead us to wander in a tighter region around the minimum, which usually is a good enough result. Typical choices are:
+Consider for simplicity standard gradient descent. What happens actually is that the steps are quite noisy in the taken direction, not exactly as the previous mentioned triangle wave. This doesn't give big problems at the beginning of the algorithms, but as we approach the minimum we might end up wandering for a technically not finite amount of time about it, but taking too big steps to really reach it. Reducing in an appropriate way the learning rate as the iterations increase in principle doesn't eliminate this problem (unless we exactly hit the minimum), but by sure lead us to wander in a tighter region around the minimum, which usually is a good enough result. Typical choices are:
 \begin{itemize}
 	\item $\alpha = \frac{1}{1-d*t}\cdot\alpha_0$, \textit{d} being a decay rate,
 	\item $\alpha \propto \frac{1}{\sqrt{t}}\cdot\alpha_0$
 \end{itemize}
 where in both cases \textit{t} stands for the iteration number and $\alpha_0$ is the initial learning rate, but also a simpler piecewise constant decay can make the difference.\\
-\newline \noindent In this chapter a significant number of hyperparameters has been explicitly introduced, each of which has to be properly tuned; moreover the list is not exhaustive, for example how to split the data into the three sets has to be decided too\footnote{This depends strongly on the total amount of data, e.g. it could range from $60\%-20\%-20\%$ respectively for train-dev-test sets when we have about $10^3$ data, to $98\%-1\%-1\%$ when we have millions of data, basically because the dev and the test set has to be just big enough to evaluate the performance of the network, while the training set is the one on which the network really \textit{learn} the optimal parameters. Moreover, when having such a big amount of data, it's better considering techniques based on mini-batches.}. Fortunately not all the parameters plays the same role: a good idea might be to start from hyperparameters like the learning rate, the number of hidden units and of nodes per layer, while other parameters like for example the default Adam ones ($\beta_1=0.9,\,\beta_2=0.999,\,\varepsilon=1e-8$) are already good for most applications. 
+\newline \noindent In this chapter a significant number of hyperparameters has been explicitly introduced, each of which has to be properly tuned; moreover the list is not exhaustive, for example how to split the data into the three sets has to be decided too\footnote{This depends strongly on the total amount of data, e.g. it could range from $60\%-20\%-20\%$ respectively for train-dev-test sets when we have about $10^3$ data, to $98\%-1\%-1\%$ when we have millions of data, basically because the dev and the test set just have to be big enough to evaluate the performance of the network, while the training set is the one on which the network really \textit{learns} the optimal parameters. Moreover, when having such a big amount of data, it's better considering techniques based on mini-batches.}. Fortunately not all the parameters plays the same role: a good idea might be to start from hyperparameters like the learning rate, the number of hidden units and of nodes per layer, while other parameters like for example the default Adam ones ($\beta_1=0.9,\,\beta_2=0.999,\,\varepsilon=1e-8$) are already good for most applications. 
 
 
 
@@ -341,11 +341,11 @@ where in both cases \textit{t} stands for the iteration number and $\alpha_0$ is
 
 \chapter{Application to PDEs}\label{chapter2}
 \setcounter{figure}{5}
-The idea of applying machine learning to numerical analysis can be traced back up to \cite{Lagaris}, who tried to solve ODEs and PDEs by means of neural networks. The authors have shown some of the potential of DNNs, such as their being excellent interpolators and the ease of parallelization of the deep learning algorithm; moreover they proposed a first comparison with finite element method and faced the problem one encounters when dealing with BVPs in a deep learning setting, which we will expose too. However they still use a mesh, which is a not necessary burden as we'll show, and they used a shallow neural network, with only one hidden layer, that, albeit theoretically able to recover any continuous function, is quite far from being optimal.\\
+The idea of applying machine learning to numerical analysis can be traced back up to \cite{Lagaris}, who tried to solve ODEs and PDEs by means of neural networks. The authors have shown some of the potential of DNNs, such as their being excellent interpolators and the ease of parallelization of the deep learning algorithm; moreover they proposed a first comparison with finite element method and faced the problem one encounters when dealing with boundary value problems (BVPs) in a deep learning setting, which we will expose too. However they still used a mesh, which is a not necessary burden as we'll show, and they used a shallow neural network, with only one hidden layer, that, albeit theoretically able to recover any continuous function, is quite far from being optimal.\\
 More recently the explosion of the Big Data field has given rise to stronger interests in deep learning, leading to the development of new tools which are being applied in the study of PDEs too with promising results; for example \cite{Sirignano} face the problem of dimensionality, solving PDEs in space up to 200 dimension using a mesh-free algorithm.\\
-Anyway research in this field is still very young, most of the papers having 1-2 years old, and coherently there isn't a solid general theoretical framework as the one of FEM; nonetheless there already are some interesting results, like the one of \cite{Jinchao}.\\
-The aim of the present chapter is to outline possible ways of proceeding for problems that one most often encounters in engineering and applied sciences, taking as example the classical Poisson-Dirichlet problem, highlighting pros and cons of the method too (section \ref{section2.1}), and then to provide some useful theoretical result (section \ref{section2.2}), which compare DNNs accuracy w.r.t. FEMs.
-
+Anyway research in this field is still very young, most of the papers having 1-2 years old, and coherently there isn't a solid general theoretical framework as the one of FEM; nonetheless there are already some interesting results, like the one of \cite{Jinchao}.\\
+The aim of the present chapter is to outline possible ways of proceeding for problems that one most often encounters in engineering and applied sciences, taking as example the classical Poisson-Dirichlet problem, highlighting pros and cons of the method too (section \ref{section2.1}), and then to provide some useful theorems (section \ref{section2.2}), which compare DNNs accuracy w.r.t. FEMs.
+\newpage
 \section{The Poisson-Dirichlet problem}\label{section2.1}
 There are different ways to employ deep learning to solve the Poisson-Dirichlet problem:
 \begin{equation}\label{PoissonDirichlet}
@@ -357,10 +357,10 @@ u_{|_{\partial\Omega}}=g\qquad on\, \partial\Omega
 Recently \cite{Kailai} have obtained good results in few dimension with well-behaved manufactured solutions; their strategy is based on \cite{Lagaris} for the treatment of the boundary condition and on \cite{Sirignano} for the mesh; this method follows.\\
 Having in mind what has been said in chapter \ref{chapter1}, the first thing to do is to generate the datasets. Concerning this, there are at least two important things to notice: 
 \begin{itemize}
-	\item the point can be sampled randomly in $\overline{\Omega}$, so to wipe out the need of a mesh, guaranteeing in this way large computational savings, especially in high dimension;
+	\item the points can be sampled randomly in $\overline{\Omega}$, so to wipe out the need of a mesh, guaranteeing in this way large computational savings, especially in high dimensions;
 	\item the probability that points given by a random generator lie on $\partial \Omega$ is technically zero, since $|\partial\Omega|/|\Omega|=0$, so it has to be ensured that the network is trained on the boundary too.
 \end{itemize}
-\noindent The authors splits the problem in two similar one, the first having a training set made only by boundary points, the second only by interior points; \footnote{The fundamental aspect is to have ``enough" boundary point. A conceptually simpler solution may be to force the random generator to output an appropriate fraction of boundary points over the total generated, and then to use only one network training on the whole set.}in both cases they use equation \eqref{PoissonDirichlet} RHS to calculate $f,g$ at the random generated points. Then they build up two neural networks, specifically with $3$ layers and $64\times 3$ nodes, $tanh(\cdot)$ activation function and Adam optimizer, to reconstruct the solution $u$ as:
+\noindent The authors splits the problem in two similar one, the first having a training set made only by boundary points, the second only by interior points;\footnote{The fundamental aspect is to have ``enough" boundary points. A conceptually simpler solution may be to force the random generator to output an appropriate fraction of boundary points over the total generated, and then to use only one network training on the whole set.} in both cases they use equation \eqref{PoissonDirichlet} RHS to calculate $f,g$ at the random generated points. Then they build up two neural networks, specifically with $3$ layers and $64\times 3$ nodes, $tanh(\cdot)$ activation function and Adam optimizer, to reconstruct the solution $u$ as:
 \begin{equation}\label{sol_kailai}
 u(x,y;w_1,w_2)=A(x,y;w_1)+B(x,y)\cdot N(x,y;w_2)
 \end{equation}
@@ -385,38 +385,38 @@ which, besides the positive constant $\beta$ and considering homogeneous Dirichl
 The method then proceeds minimizing the cost functional \eqref{cost_weinan} over the set of admissible functions $U_{ad}$, and is here that deep learning comes in. \\
 In fact functions in $U_{ad}$ are re-constructed through neural networks, so moving from an additive-like construction proper of standard approximation theory to a compositional-based one.\\
 At this point the authors apply a quadrature formula to the integral in \eqref{cost_weinan} and then solve the final optimization problem with a proper optimization algorithm.\\\\
-\noindent The algorithm produces good results but, as other approaches based on DNN, has a drawback side: even when the initial problem is convex, the variational problem which is then obtained isn't so, inheriting thus the problem of local minima and saddle points proper of deep learning.
+\noindent The algorithm produces good results but, as other approaches based on DNN, has a drawback side: even when the initial problem is convex, the variational problem which is then obtained isn't so, inheriting thus the problem of local minima, plateau and saddle points proper of deep learning.
 
 \section{Some more in-depth theoretical results}\label{section2.2}
 In this paragraph some results, obtained mainly by \cite{Jinchao}, are presented, with the aim of giving estimates of the optimal size for a DNN employed to solve PDEs; in particular the results found are useful to ensure that the DNN recovers the same accuracy of the finite element method based on linear base functions.\\
 We recall some FEM notation we use in the following: suppose to have a bounded domain\footnote{In the sense of open and connected.} $\Omega\in\mathbb{R}^d$ ad a conforming mesh or grid $\mathcal{T}_h\subset\Omega$, define moreover $k_h$ as the maximum number of mesh elements neighboring a grid point; then the FE space of grade one is:
 \[ V_h=\{ v \in C_\Omega \text{ s.t. $v$ is linear on every } \tau_k \in \mathcal T_h \} \]
 In other words, the base functions of the grade one FEM are continuous piecewise linear functions, in short CPWL; it is thus natural to proceed into the study using ReLU-DNNs, since the ReLU activation function is a CPWL function and DNNs construct their output as a composition of linear functions and activation functions, giving so a CPWL function as output.\\
-\newline \noindent The two main results are\footnote{These are taken respectively from Theorem 3.1 and Corollary 5.1 of \cite{Jinchao}.}:
+\newpage \noindent The two main results are\footnote{These are taken respectively from Theorem 3.1 and Corollary 5.1 of \cite{Jinchao}.}:
 \begin{Theorem}\label{thm3.1}
 	\textit{Given a locally convex finite element grid $\mathcal T_h$ , any linear finite element function in $\mathbb R^d$ with N degrees of freedom can be written as a ReLU-DNN with at most $\lceil log_2 (k_h)\rceil +1$ hidden layers and at most $\mathcal O(k_hN)$ neurons.}
 \end{Theorem}
 \begin{Theorem}\label{corol5.1}
 	\textit{Given a locally convex finite element grid $\mathcal T_h$ , any linear finite element function in $\mathbb R^d$ with N degrees of freedom can be written as a ReLU-DNN with at most $\lceil log_2 (d+1)\rceil$ hidden layers and at most $\mathcal O(d2^{(d+1)k_h}N)$ neurons.}	
 \end{Theorem}
-\noindent A direct comparison of the two theorems shows that although it is possible to achieve linear FEM like accuracy with a relatively shallow network, the deeper one has a considerably smaller size.\\
-To fix the ideas it has been considered $d=2$ and $\Omega$ being the unit circle. Then with a standard triangulation of the domain is:
+\noindent A direct comparison of the two theorems shows that, although it is possible to achieve linear FEM like accuracy with a relatively shallow network, the deeper one has a considerably smaller size.\\
+To fix the ideas it has been considered $d=2$ and $\Omega$ being the unit circle. Then a standard triangulation of the domain is:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=10cm]{img/triangulation.png}
-	\caption{}\label{k_h}
+	\caption{Mesh}\label{k_h}
 \end{figure}
-\noindent To do an estimate it's thus possible to assume $k_h=6$.\\
+\noindent When doing an estimate it's thus possible to take $k_h=6$.\\
 To find a proper value for N we consider the very well-behaved solution:
 \[u_{exact}=e^{-(x^2+y^2)}(x^2+y^2-1)\]
-of the problem \eqref{PoissonDirichlet} obtained computing $f$ as $\Delta u_{exact}$; we then solve the problem different times using the FOSS software \cite{freefem++} refining the mesh until a good result is reached.\footnote{Code in \ref{appendix}}. \\
-We obtain a relative $L_2$ error, defined as $err_{L_2} = \frac{||u_{exact}-u_h||_2}{ \frac{1}{2} (||u_{exact}||_2+||u_h||_2) }  $, of $1.65\%$ when using 36 triangles on the border of the domain, as in figure \ref{k_h}, which lead to a $V_h$ space with 137 degrees of freedom:
+of the problem \eqref{PoissonDirichlet} obtained computing $f$ as $\Delta u_{exact}$; we then solve the problem different times using the FOSS software \cite{freefem++} refining the mesh until a good result is reached.\footnote{Code in \hyperref[appendix]{appendix}.}. \\
+We obtain a relative $L_2$ error, defined as $err_{L_2} = \frac{||u_{exact}-u_h||_2}{ \frac{1}{2} (||u_{exact}||_2+||u_h||_2) }  $, of $1.65\%$ when using 36 triangles on the border of the domain, as in Figure \ref{k_h}, which lead to a $V_h$ space with 137 degrees of freedom:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=14cm]{img/u2.png}
 	\caption{}\label{u2}
 \end{figure}
-\noindent In the end is possible to conclude that to recover the same result using a ReLU-DNN \textit{at most}:
+\noindent In the end it is possible to conclude that to recover the same result using a ReLU-DNN \textit{at most}:
 \begin{itemize}
 	\item $\lceil log_2 (k_h)\rceil +1=4$ layers and $\mathcal O(k_hN)\simeq 10^3$ total nodes, or
 	\item $\lceil log_2(d+1) \rceil = 2$ layers and $\mathcal O(d2^{(d+1)k_h}N)\simeq 10^8$ total nodes
@@ -430,17 +430,17 @@ are needed, confirming that a deep neural network is computational more convenie
 
 \chapter{Implementation of neural-net}\label{chapter3}
 \setcounter{figure}{8}
-In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given. As just shown in chapter \ref{chapter2}, what different DNN based PDE solvers have in common is their relying on whats turn out to be DNN's numerical analysis strongest point: their remarkably capability of reconstructing function, which is used to construct the basis of the approximation spaces. For this reason it has been decided to start writing an interpolator based on DNNs; different possible expansions are being investigated as well.\\
-The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the web page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\footnote{At the moment, already merged branches have not been deleted yet for personal ease in history navigation, e.g. when typing {\ttfamily \$ git log --pretty=format:"\%h \%s" --graph}, but the master branch is the only one which is really active.}\\
-In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the README.md file and in chapter \ref{chapter4}, where it is shown how to build the program and run an example. 
-
+In this chapter an in-depth view of a Deep Learning C++ program, called \textit{neural-net}, is given. As just shown in chapter \ref{chapter2}, what different DNN based PDE solvers have in common is their relying on what turns out to be DNN's numerical analysis strongest point: their remarkably capability of reconstructing function, by means of compositions, which is used to construct the basis of the approximation spaces. For this reason it has been decided to start writing an interpolator based on DNNs; different possible expansions are being investigated as well.\\
+The program has been built using the \cite{git} distributed version control system, with GitHub as hosting service, and can be freely cloned or downloaded from the web page: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}.\footnote{At the moment, already merged branches have not been deleted yet for personal ease in history navigation, e.g. when typing {\ttfamily \$ git log --pretty=format:"\%h \%s" --graph}, but the master branch is the only one which is really active and updated.}\\
+In order to build and run the program, some not included dependencies are needed, in particular a C++ compiler, \cite{make}, \cite{gnuplot}, \cite{eigen} and \cite{boost} libraries, while to build the documentation a TeX compiler has to be used; more details are given in the README.md file and in chapter \ref{chapter4}, where it is shown how to obtain, build and run the program. 
+\newpage
 \section{Directory tree}
 Downloading the repository ``neural-net'' one finds:
 \begin{itemize}
-	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, and \cite{gnuplot} scripts in .gnu format to generate dataset graphs;
+	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, and \cite{gnuplot} scripts in .gnu format to generate datasets graphs;
 	\item the \textit{doc} folder, containing this documentation in .tex and .pdf format, plus the \textit{img} sub-folder where the images included by the TeX file are stored;
-	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters file and command line options, \textit{gnuplot-iostream.hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork class, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as class templates;
-	\item the \textit{src} folder, which contain the source files main.cpp, NeuralNetwork.cpp, where the NeuralNetwork class member functions are defined, the Makefile which can be used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets is placed;
+	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters files and command line options, \textit{gnuplot-iostream .hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork class, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as class templates;
+	\item the \textit{src} folder, which contain the source files \textit{main.cpp}, \textit{NeuralNetwork.cpp}, where the NeuralNetwork class member functions are defined, the \textit{Makefile} which can be used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets is placed;
 	\item the COPYING file, a plain text file containing copying informations and licenses;
 	\item the README.md file, a markdown file containing basic informations;
 	\item the (hidden) \textit{.gitignore} file, that traces the file extensions which are not being pushed to the remote, mainly compilation files, executables and comments file.
@@ -448,11 +448,11 @@ Downloading the repository ``neural-net'' one finds:
 \noindent Despite their different extensions, every non-png nor non-pdf file can be opened by any text editor.
 \section{The Neural Network class}
 The class NeuralNetwork implements a computational efficient design of a deep neural network (DNN).\\
-As seen in chapter \ref{chapter1}, to which we refer for the names of the principal quantities as for the justification of the main algorithms, a DNN is composed by different layers, each of which is composed by a (possibly) different number of nodes. At the beginning of the present project, this hierarchical structure naturally inherent to DNNs led to the idea of developing three classes, NeuralNetwork, Layer and Node. For reason that will appear clearer later on\footnote{Basically, because first, internal and last layer performs slightly different works.}, Layer would have been an abstract class, from witch the child classes InputLayer, HiddenLayer and OutputLayer would have inherited. That approach doubtless had the pro of adhering to the abstract model of a DNN, from the more general structure to the really low-level computations, but initial tests have shown that it wasn't so competitive from a computational efficiency point of view, besides being more complex than strictly necessary.\\
+As seen in chapter \ref{chapter1}, to which we refer for the names of the principal quantities as for the justification of the main algorithms, a DNN is composed by different layers, each of which is composed by a (possibly) different number of nodes. At the beginning of the present project, this hierarchical structure naturally inherent to DNNs led to the idea of developing three classes, NeuralNetwork, Layer and Node. For reasons that will appear clearer later on\footnote{Basically, because first, internal and last layer performs slightly different works.}, Layer would have been an abstract class, from witch the child classes InputLayer, HiddenLayer and OutputLayer would have inherited. That approach doubtless had the pro of adhering to the abstract model of a DNN, from the more general structure to the really low-level computations, but initial tests have shown that it wasn't so competitive from a computational efficiency point of view, besides being more complex than strictly necessary.\\
 The final choice has been to ``vectorize'' the computations as much as possible, grouping together all the operations performed by nodes in each layer by means of matrices.
-Of course this passage, which can be considered computationally mandatory in machine learning typical languages such as Python, hasn't brought efficiency by itself, being C++ a compiled language, but has allowed to rely on strongly optimized well known linear algebra libraries, which have made the difference. In particular the choice is fallen on the \cite{eigen} template library, for its immediate compatibility with C++ and its ease of use and linking with respect to other classical libraries such as Lapack, while maintaining a very good performance.
-Having reached this point, and having loose somehow an eye-apparent evident sight on each node operations, keeping the original design of a neural network class composed by three different specifications of the layer class has appeared senseless, and thus it has been decided to simplify the code making the neural network class hold just vectors of the quantities that characterized every layer. \\
-The choices made have thus led to a structure as the following:
+Of course this passage, which can be considered computationally mandatory in machine learning typical languages such as Python, hasn't brought efficiency by itself, being C++ a compiled language: the difference lies in the fact that it has allowed to rely on strongly optimized well known linear algebra libraries, which have provided considerable computational time savings. In particular the choice is fallen on the \cite{eigen} template library, for its immediate compatibility with C++ and its ease of use and linking with respect to other classical libraries such as Lapack, while maintaining a very good performance.
+Having reached this point, and having lost a somehow eye-apparent  sight on each specific node operations, it has appeared senseless to keep the original design of the neural network class, and thus it has been decided to simplify the code, by developing just one class which holds vectors of the quantities that used to characterize every layer in the original design. \\
+The choices made have thus led to a structure as the following one:
 %basicstyle=\fontsize{9}{11}\ttfamily
 \begin{lstlisting}[frame=single, name=neuralnet, showstringspaces=false]
 class NeuralNetwork{
@@ -495,24 +495,25 @@ public:
 
 \end{lstlisting}
 \noindent Note that here and in most of the following codes all preprocessor's directives as includes and header guards, as well as scope operators, typedefs and comments have been omitted for brevity.\footnote{See NeuralNetwork.hpp for the complete version.}\\
-So the class NeuralNetwork hold basically four kind of data members: 
+So the class NeuralNetwork holds basically four kind of data members: 
 \begin{enumerate}[(i)]
 	\item\label{item:i} architecture (hyper)parameters, like {\ttfamily nlayers} and {\ttfamily nnodes}, which specify respectively the total number of layers and the number of nodes for each layer, {\ttfamily VectorXs} being a {\ttfamily typedef} for an Eigen dynamic vector holding {\ttfamily std::size\_t}s, miming the one of {\ttfamily Eigen::VectorXd};
-	\item\label{item:ii} the parameters to be optimized, namely {\ttfamily W} and {\ttfamily b}, that has to be somehow a vector of vector, i.e. not a matrix, since the number of nodes varies for each layer;
-	\item\label{item:iii} the \textit{propagation members} {\ttfamily L}, {\ttfamily A}, {\ttfamily B}, {\ttfamily dW} and {\ttfamily db}, that holds the data computed at every cycle of forward and backward propagation;
+	\item\label{item:ii} the parameters to be optimized, namely {\ttfamily W} and {\ttfamily b}; notice that the latter has to be a vector of vectors, and not a matrix, since the number of nodes varies for each layer;
+	\item\label{item:iii} the \textit{propagation members} {\ttfamily L}, {\ttfamily A}, {\ttfamily B}, {\ttfamily dW} and {\ttfamily db}, that hold the data computed at every cycle of forward and backward propagation;
 	\item \label{item:iv} the optimizers for {\ttfamily W} and {\ttfamily b}, which hold a (smart) pointer to the base class of the Optimizers class hierarchy.\footnote{Optimizers.hpp is illustrated in section \ref{section3.3}}
 \end{enumerate}
 For what concerns the (\ref{item:i}) group, {\ttfamily nnodes} is the \textit{true} parameter, indeed it is the only argument that the constructor takes, while {\ttfamily nlayers} is stored for convenience, since it is used very often in for loops in the member functions, but could be removed. In general, it has been chosen to use {\ttfamily std::size\_t} every time an unsigned was needed, to adopt a standard that would fit every necessity.\\
-As explained above, {\ttfamily W} and {\ttfamily b} are the vectorized version of \ref{chapter1} parameters: if we call {\ttfamily l} the generic layer, then {\ttfamily W[l]} is an {\ttfamily nnodes(l)}$\times${\ttfamily nnodes(l+1)} matrix, while {\ttfamily b[l]} is a {\ttfamily nnodes(l+1)} column vector, as in Figure \ref{neuralnet}.\\
+As explained above, {\ttfamily W} and {\ttfamily b} are the vectorized version of chapter \ref{chapter1} parameters: if we call {\ttfamily l} the generic layer, then {\ttfamily W[l]} is an {\ttfamily nnodes(l)}$\times${\ttfamily nnodes(l+1)} matrix, while {\ttfamily b[l]} is a {\ttfamily nnodes(l+1)} column vector, as in Figure \ref{neuralnet}.\\
 A similar comment holds for the propagation members (\ref{item:iii}), with two observations:
 \begin{itemize}
 	\item forward members, {\ttfamily L} and {\ttfamily A}, have been chosen to be the most general possible, even if for the problems for which the program has been designed the first one and the last one will be always column vectors, and not true matrices;
 	\item backward members, {\ttfamily B} (which stands for ``backward''), {\ttfamily dW} and {\ttfamily db}, aren't strictly needed, like the previous {\ttfamily nlayers}, but simplify significantly the subsequent code.
 \end{itemize}
-The (\ref{item:iv}) group has been introduced later, indeed simple algorithms like Gradient Descent can be applied directly during the training phase, i.e. can be written directly by hand in a {\ttfamily training()} function. However it turns out that most finer optimizers need to store estimators of the gradients, and this estimators have to be updated at every training iteration, thus the need for storing them in the neural net.\\
+The (\ref{item:iv}) group has been introduced later, indeed simple algorithms like Gradient Descent can be applied directly during the training phase, i.e. can be written directly by hand in the {\ttfamily training()} function. However it turns out that most finer optimizers need to store estimators of the gradients, and this estimators have to be updated at every training iteration, thus the idea of storing them in the neural net.\\
 Since, as it will be seen in the following section, optimizers have been implemented applying inheritance, here we store smart pointers to the base class, instead of the proper optimizer itself, in order to be able to use polymorphism later and to let the user choose the desired optimizer runtime, when calling the training function.\\
-\newline \noindent
-Having introduced the data members, consider the member functions:
+\newpage \noindent
+Having introduced the data members, we consider now the member functions.\\
+The constructor initialize every member, in order of declaration:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 
@@ -534,8 +535,8 @@ NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 	b_optimizer.reserve(nlayers-1);
 }
 \end{lstlisting}
-The constructor initialize every member, in order of declaration. In all methods whenever possible efficiency has been considered: for example here {\ttfamily nlayers} and {\ttfamily nnodes} are initialized in the member initializer list, and {\ttfamily std:: vector<T>::reserve()} followed by {\ttfamily std::vector<T>::emplace\_back()} is preferred over {\ttfamily std::vector<T>::push\_back()}.\\
-As already explained {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between zero and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random, as requested by the chapter \ref{chapter1} argumentation, we should use them and guarantee effective randomness including ``real entropy'' in the seed, for example in this way:
+In all methods whenever possible efficiency has been considered: for example here {\ttfamily nlayers} and {\ttfamily nnodes} are initialized in the member initializer list, and {\ttfamily std::vector<T>::reserve()} followed by {\ttfamily std::vector<T>::emplace\_back()} is preferred over {\ttfamily std::vector<T>::push\_back()}.\\
+As already explained {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between zero and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random, as requested by the chapter \ref{chapter1} argumentation, we should use the latter and guarantee effective randomness including ``real entropy'' in the seed, for example in this way:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 size_t sd = chrono::system_clock::now().time_since_epoch().count();
 default_random_engine gen(sd);
@@ -544,9 +545,9 @@ for(size_t i=0; i<W.rows(); ++i)
 	for(size_t j=0; j<W.cols(); ++j)
 		W(i,j) = random_value(gen);
 \end{lstlisting}
-However, the Eigen default random function has shown very good performances, so it has been preferred due to its simplicity.\\
-It's worth noting that only {\ttfamily W}, {\ttfamily b} and their gradients can be fully initialized, since it has been chosen to take the input data, whatever it is, training or test data, chosen optimizer..., only when it is really used. Consequently variables like the number of data, which is one of the dimension of the {\ttfamily A[l], L[l]} matrices, is not known at this moment.\\
-In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (scomposed in different frames for clarity):
+However, the Eigen default pseudo-random function has shown very good performances, so it has been preferred due to its simplicity.\\
+It's worth noting that only {\ttfamily W}, {\ttfamily b} and their gradients can be fully initialized, since it has been chosen to take the input data (whatever it is, training or test data, chosen optimizer...) only when it is really used. Consequently variables like the number of data, which is one of the dimension of the {\ttfamily A[l], L[l]} matrices, is not known at this moment.\\
+In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (here decomposed in different frames for clarity):
 \begin{lstlisting}[frame=single, showstringspaces=false]
 void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements, const bool verbose){                     
 	///////////////////
@@ -569,7 +570,7 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 	L[0]=Data.col(0); 
 	A[0]=L[0];	
 \end{lstlisting}
-Since the input datasets have to be read somehow, and since the ``layer structure'' was already ready, the first layer has been reserved for reading only. This is of course a personal choice, motivated basically from the fact that it's easy and works good. A more elaborate one could have been to let the first layer weight the $(x,y)$ couples received during training from the dataset, and thus having e.g. {\ttfamily W[0]} an {\ttfamily ndata x nnodes[0]} matrix, but, being {\ttfamily ndata} quite large, this introduces by sure some overhead.\\
+Since the input datasets have to be read somehow, and since the ``layer structure'' was already ready, the first layer has been reserved for reading only. This is of course a personal choice, motivated basically from the fact that it's easy and works good. A more elaborate one could have been to let the first layer weight the $(x,y)$ couples received during training from the dataset, and thus having e.g. {\ttfamily W[0]} an {\ttfamily ndata x nnodes[0]} matrix, but, being {\ttfamily ndata} quite large, this introduces by sure some overhead, which would be unjustified in this case.\\
 Since in the present version the first layer only reads the input, it don't need weights, biases and gradients at all, and for this reason their vectors have one component less.\\
 A different discussion must be made with regards to the activated outputs variable {\ttfamily A}, which again has just {\ttfamily nlayers-1} elements, but for another reason, less subjective: since we want our output to be a function, in the sense of mathematical analysis, with no particular requirements, we cannot in general activate the last output, because if we would do so for example with a $tanh(\cdot)$, we would be able to reconstruct only $tanh(\cdot)$s.\\
 The ``Init'' phase of the {\ttfamily train()} function finishes with the initialization of the optimizers, which is made through a switch-case construct:
@@ -654,15 +655,15 @@ alpha=alpha/10;
 tolerance=tolerance/((10-2*ref)*10);
 } 
 \end{lstlisting} 
-Learning rate decay has been implemented because it turned out to be very important to obtain acceptable accuracy. This implementation has the pros of being automatic, very simple and effective enough, but, since everything in DNN programming is very problem dependent and has to be tuned properly case by case, better results can be obtained miming this procedure directly in the main, when training the net. Indeed is enough to don't pass the number of refinements as argument to turn off the automatic learning rate decay, and then implement it manually with subsequent calls to the training function. Guidelines to do it are presented in chapter \ref{chapter4}.\\
-The forward propagation step that take place in the above inner loop follows the general theory:
+Learning rate decay has been implemented because it turned out to be very important to obtain acceptable accuracy. This implementation has the pros of being automatic, very simple and effective enough, but, since everything in DNN programming is very problem dependent and has to be tuned properly case by case, better results can be obtained miming this procedure directly in the main, when training the net. Indeed it is enough to don't pass the number of refinements as argument to turn off the automatic learning rate decay, and then implement it manually with subsequent calls to the training function. Guidelines to do it are presented in chapter \ref{chapter4}.\\
+The forward propagation step that takes place in the above inner loop follows the general theory:
 \begin{lstlisting}[frame=single]
 /////////////////////////
 // Forward propagation //
 /////////////////////////
 for(size_t l=1; l<nlayers-1; ++l){
 	//Summing the column vector b (nnodes(l+1)x1) to each 
-	//column of A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)) :
+	//column of A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)):
 	L[l] = ( A[l-1]*W[l-1] ).rowwise() + b[l-1].transpose();
 	A[l] = tanh( L[l].array() );
 }	
@@ -672,8 +673,8 @@ L[nlayers-1] = ( A[nlayers-2]*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose(
 //Computing cost as the L2 distance: (divided by 2, for ease in later differentiation)
 cost = .5 * (L[nlayers-1] - Data.col(1)).array().square().matrix().sum();
 \end{lstlisting}
-As evident, the code strongly relies on the Eigen built-in operations and function; in particular at line 7 and 11 of the above code a Python-like \textit{broadcasting} is implemented. An advantage of using Eigen is the ease of switching between matrix like operations, like the products in the same lines of code, to element wise operations, invoked with a {\ttfamily .array()}; moreover, when optimization is activated, such conversions, as well as transpositions and so on, are implemented so that they are costless from a computational point of view.\\
-Then a convergence check and, eventually, an output to std::output is performed:
+As evident, the code strongly relies on the Eigen built-in operations and function; in particular at line 7 and 11 of the above code a Python-like \textit{broadcasting} is implemented. Another great advantage of using Eigen is the ease of switching between matrix like operations, like the products in the same lines of code, to element wise operations, invoked with a {\ttfamily .array()}; moreover, when optimization is activated, e.g. with the {\ttfamily g++ -O3} option, such conversions, as well as transpositions and so on, are implemented so that they are costless from a computational point of view.\\
+Then a convergence check and, eventually, an output to the standard output is performed:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 /////////////////////////
 //  Convergence check  //
