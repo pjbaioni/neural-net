@@ -84,8 +84,8 @@ The aim of this project is to get into deep learning techniques and study their 
 The structure of the report is as follows.\\
 In chapter \ref{chapter1} we present the general architecture of a Deep Neural Network (DNN) and the main idea of functioning of the algorithm that allows it to learn from the data (Deep Learning), consisting of two phases, called \textit{forward propagation} and \textit{backward propagation}. Therefore, some  sector-specific issues are considered in detail, such as: distinction between train, development and test sets, problems related to overfitting, possible regularization techniques aimed at reducing it, different optimization algorithms and an overview of the main parameters that must be tuned adequately to get good results.\\
 In chapter \ref{chapter2} two possible approaches to solving PDEs via DNNs are exposed, also highlighting some choices that can be made in the formulation of the problem and in the treatment of the boundary conditions. We then deepen the comparison between DNNs and the piecewise continuous linear function which are used as bases of finite element spaces of order one, in order to provide a greater intuition of the reasons why the DNN-based method works and to identify, albeit in this particular case, some indications on the ideal number of nodes and layers of the DNN.\\
-In chapter \ref{chapter3} we explain the programming architectural choices that have been taken during the development of the code and we illustrate its structure and some of the content of its main files, also providing some insights with respect to the actual implementation of the previously stated theory and methods.\\
-In chapter \ref{chapter4} instructions on how to obtain\footnote{The code is freely available on GitHub: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}}, compile, link and run the program are given, as well as a complete benchmark case, which serve both as test example to verify the correct functioning of the code and also as opportunity to generalize a little bit and speak about the possible behavior of the neural net when settings are changed.\\
+In chapter \ref{chapter3} we explain the programming architectural choices that have been taken during the development of the code and we illustrate its structure and some of the content of its main files, also providing some insights with respect to the actual implementation of the previously stated theory and methods. The chapter ends with proposing and discussing possible extensions which might be taken in consideration for future developments of the code.\\
+Chapter \ref{chapter4} provides instructions on how to obtain,\footnote{The code is freely available on GitHub: \href{https://github.com/pjbaioni/neural-net}{\emph{https://github.com/pjbaioni/neural-net}}} compile, link and run the program, as well as a complete benchmark case, which may be used as test example to verify the correct functioning of the code. After that we dwell on some insights on the behavior of the neural network with respect to those changes in the settings which could be of greater interest, and we illustrate a general procedure for tuning by hand the learning algorithm.\\
 In \hyperref[appendix]{appendix} we report the \cite{freefem++} code written for the computations performed in section \ref{section2.2}.
 
 
@@ -453,7 +453,6 @@ The final choice has been to ``vectorize'' the computations as much as possible,
 Of course this passage, which can be considered computationally mandatory in machine learning typical languages such as Python, hasn't brought efficiency by itself, being C++ a compiled language: the difference lies in the fact that it has allowed to rely on strongly optimized well known linear algebra libraries, which have provided considerable computational time savings. In particular the choice is fallen on the \cite{eigen} template library, for its immediate compatibility with C++ and its ease of use and linking with respect to other classical libraries such as Lapack, while maintaining a very good performance.
 Having reached this point, and having lost a somehow eye-apparent  sight on each specific node operations, it has appeared senseless to keep the original design of the neural network class, and thus it has been decided to simplify the code, by developing just one class which holds vectors of the quantities that used to characterize every layer in the original design. \\
 The choices made have thus led to a structure as the following one:
-%basicstyle=\fontsize{9}{11}\ttfamily
 \begin{lstlisting}[frame=single, name=neuralnet, showstringspaces=false]
 class NeuralNetwork{
 
@@ -486,7 +485,7 @@ public:
 	NeuralNetwork(const VectorXs &);
 	
 	//Training function:
-	void train(const MatrixXd & Data, double alpha, size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements=1, const bool verbose=false);
+	void train(const Eigen::MatrixXd & Data, double alpha, std::size_t niter, const std::size_t W_opt, const std::size_t b_opt, double tolerance=-1., const std::size_t nrefinements=1, const bool verbose=false);
 	
 	//Test function:
 	pair<VectorXd,double> test(const MatrixXd & Data);
@@ -549,7 +548,7 @@ However, the Eigen default pseudo-random function has shown very good performanc
 It's worth noting that only {\ttfamily W}, {\ttfamily b} and their gradients can be fully initialized, since it has been chosen to take the input data (whatever it is, training or test data, chosen optimizer...) only when it is really used. Consequently variables like the number of data, which is one of the dimension of the {\ttfamily A[l], L[l]} matrices, is not known at this moment.\\
 In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (here decomposed in different frames for clarity):
 \begin{lstlisting}[frame=single, showstringspaces=false]
-void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance, const size_t W_opt, const size_t b_opt, const size_t nrefinements, const bool verbose){                     
+void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, const size_t W_opt, const size_t b_opt, double tolerance, const size_t nrefinements, const bool verbose){                     
 	///////////////////
 	//      Init     //
 	///////////////////
@@ -673,7 +672,7 @@ L[nlayers-1] = ( A[nlayers-2]*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose(
 //Computing cost as the L2 distance: (divided by 2, for ease in later differentiation)
 cost = .5 * (L[nlayers-1] - Data.col(1)).array().square().matrix().sum();
 \end{lstlisting}
-As evident, the code strongly relies on the Eigen built-in operations and function; in particular at line 7 and 11 of the above code a Python-like \textit{broadcasting} is implemented. Another great advantage of using Eigen is the ease of switching between matrix like operations, like the products in the same lines of code, to element wise operations, invoked with a {\ttfamily .array()}; moreover, when optimization is activated, e.g. with the {\ttfamily g++ -O3} option, such conversions, as well as transpositions and so on, are implemented so that they are costless from a computational point of view.\\
+As evident, the code strongly relies on the Eigen built-in operations and function; in particular at line 7 and 11 of the above code a Python-like \textit{broadcasting} is implemented. Another great advantage of using Eigen is the ease of switching between matrix like operations, like the products in the same lines of code, to element wise operations, which are the ones invoked with a {\ttfamily .array()}. Moreover, when optimization is activated, e.g. with the {\ttfamily g++ -O3} option, conversions from matrices to array, as well as transpositions and so on, are implemented in such a way that they are costless from a computational point of view.\\
 Then a convergence check and, eventually, an output to the standard output is performed:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 /////////////////////////
@@ -681,25 +680,28 @@ Then a convergence check and, eventually, an output to the standard output is pe
 /////////////////////////
 //Output the current cost
 //and check if convergence is reached:
-if( verbose && (t%25==0) ){
-	cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
+if( t%100==0 ){
+	if(verbose)
+		cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
 	err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
 	if(err<tolerance){
-		backup_t.push_back(t);
+		backup_t[nref-1]=t;
 		break;
 	}
 	else
 		old_cost = cost;
 }
 \end{lstlisting}
-Just after it the backward propagation phase begins. In the initial stages of the project, the backprop algorithm was designed following strictly the standard theory, with vectors of gradients starting from the right of the net to the left, e.g. {\ttfamily dW[0]} held the gradient of the cost functional w.r.t. the weights of the last layer.\footnote{See commit 6432f1d517205f3920ab1b77bf224735fbeec819} That designed showed soon some inconveniences: in the update phase we had e.g. {\ttfamily dW[l]} and {\ttfamily W[l]} referring to different layers, and an ad hoc construction for the gradients was needed too, instead of the simpler {\ttfamily dW=W}; for this reason it has been decided soon to ``overturn'' the backprop section while keeping its natural sequence reverting its for loop condition; that's the final code:
+Just after that the backward propagation phase begins. In the initial stages of the project, the backprop algorithm was designed following strictly the standard theory, with vectors of gradients starting from the right of the net and going to the left, e.g. {\ttfamily dW[0]} held the gradient of the cost functional w.r.t. the weights of the last layer.\footnote{See commit 6432f1d517205f3920ab1b77bf224735fbeec819} That designed showed soon some inconveniences: in the update phase we had e.g. {\ttfamily dW[l]} and {\ttfamily W[l]} referring to different layers, and an ad hoc construction for the gradients was needed too, instead of the simpler {\ttfamily dW=W}; for this reason it has been decided soon to ``overturn'' the backprop section while keeping its natural sequence, simply reverting its for loop condition. That's the final code:
 \begin{lstlisting}[frame=single]
 	//////////////////////////
 	// Backward propagation //
 	//////////////////////////
+	
 	//Compute B as d(cost)/d(output): 
 	//(no tanh now because it's the last layer)
 	B[nlayers-2] = L[nlayers-1] - Data.col(1);	
+
 	for(size_t l=nlayers-2; l>0; --l){
 		//Compute gradient of cost wrt W:
 		dW[l] = ( L[l].transpose() )*B[l];
@@ -731,8 +733,8 @@ Just after it the backward propagation phase begins. In the initial stages of th
 	\end{cases}
 \end{equation*} 
 with \textit{Y[l]} being equal to $L[l]=A[l-1]\times W[l]+b[l]$ for the last layer and to $A[l]=tanh(L[l])$ for the others.\\
-The above code implement exactly this, taking into account that the activation function is a $tanh(\cdot)$, and the subsequent update of the parameters, based on their gradients. At the beginning only gradient descent was implemented, directly into the code; that lines have been kept commented for documentation purposes, since they show what the call to the optimizer is supposed to do.\footnote{Optimization done calling the overloaded call operator isn't very elegant anymore, but it was designed when polymorphism wasn't implemented yet, so one had something like {\ttfamily W\_optimizer[l](W[l],dW[l],alpha,t)}, but then polymorphism required to store pointers in the optimizers vectors. Of course one can always do {\ttfamily W\_optimizer[l]->()(W[l],dW[l],alpha,t)}.}\\
-The training function ends with the refinement and the final output:
+The above code implements exactly this chain rule computations, taking into account that the activation function is a $tanh(\cdot)$, and performs also the subsequent update of the parameters, based on their gradients. At the beginning only gradient descent was implemented, directly into the code; that lines have been kept commented for documentation purposes, since they show what the call to the optimizer roughly speaking does.\footnote{Calling the overloaded call operator isn't very elegant anymore, but it was designed when polymorphism wasn't implemented yet, so one had something like {\ttfamily W\_optimizer[l](W[l],dW[l],alpha,t)}, but then polymorphism required to store pointers in the optimizers vectors. Of course one can always do {\ttfamily W\_optimizer[l]->()(W[l],dW[l],alpha,t)}.}\\
+\noindent The training function ends with the refinement and the final output:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 	//update refinement parameters for the next training loop:
 	alpha=alpha/10;
@@ -742,13 +744,14 @@ The training function ends with the refinement and the final output:
 	//////////////////////////
 	//     Final output     //
 	//////////////////////////
-	backup_t[nrefinements-1] == 0 ? 
-	cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)+niter<<"\n"<<"Cost functional on the training set = "<<cost<<endl :
-	cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)<<"\n"<<"Cost functional on the training set = "<<cost<<endl;
+	size_t total_iter=0;
+	for(const auto & r: backup_t)
+		r == 0 ? total_iter += niter : total_iter += r;
+	cout<<"Total iterations = "<<total_iter<<"\n"<<"Cost functional on the training set = "<<cost<<endl;
 
 }//End of the train function
 \end{lstlisting}
-where {\ttfamily std::accumulate()} is used to output the total number of iterations, since the counter is reset at every refinement. Of course one could have distinguished the cases with refinements from the ones which haven't, so e.g. to not defining the vector {\ttfamily backup\_t} when not required, but it has been preferred to not do so in order to avoid a further decision tree in the code. The last check, based on the conditional operator, is instead needed: it distinguishes between the case in which the training phase ends for having reached convergence or the maximum number of iterations.\\
+where a range-based for loop is used to compute the total number of iterations, since the counter is reset at every refinement. Of course one could have distinguished the cases with refinements from the ones which haven't, for example so to not defining the vector {\ttfamily backup\_t} when not required, but it has been preferred to not do so, in order to avoid a further decision tree in the code. Differently the last check, based on the conditional operator, is needed: it distinguishes between the case in which the inner training loop ends for having reached convergence from the case in which the maximum number of iterations is hit.\\
 \newline \noindent The {\ttfamily test()} function performs just one forward propagation, with two main differences w.r.t. {\ttfamily train()}:
 \begin{itemize}
 	\item it doesn't store nor data neither intermediate results, since it wouldn't re-use them, to save memory;
@@ -774,21 +777,18 @@ pair<VectorXd,double> test(const MatrixXd & Data){
 }
 \end{lstlisting}
 One could ask why don't use the members {\ttfamily A, L} anyway, so to don't even have to allocate the two matrices. In principle it could be done actually, but it would require more coding: {\ttfamily A[l], L[l]} have to be resized for every {\ttfamily l}, since in general the numerosity of the training set is different from the one of the tests set; instead the above approach has been preferred in order to keep the code as simple as possible.\\
-\newpage\noindent Before moving to the optimizers classes, we consider some final remarks.\\
-As can be seen, the code, despite being 1D, can be extended to a n-d interpolator with no conceptual effort. The very simplest way to do so would be to equip also the first layer with a {\ttfamily W}\footnote{and a {\ttfamily b}, and so even backprop variables too.}, basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$. Indeed doing so that the second layer would take as input just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}.\\
-Of course also in this case it would be possible to give different importance even to the single tuples of coordinates too, as it has been proposed before for the 1D case. That would by sure introduce some overhead, so it has to be done only if the results won't be satisfactory enough otherwise.\\
-Moreover that ``squeezing'' from n-D to 1D could be performed later on, in another layer. This action might have two concurring effects: from one side the computational effort of every training iteration is being increased, but from the other one less iterations might be needed to reach convergence, since the richness of the data is being kept ``alive" longer.\\
+\newline\noindent Before moving to the optimizers classes, we consider some final remarks.\\
+The code can be easily extended to a n-D interpolator with no conceptual effort. The very simplest way to do so would be to equip also the first layer with a {\ttfamily W}\footnote{and a {\ttfamily b}, and so even backprop variables too.}, basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$. Indeed, doing so the second layer would take as input just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}. Moreover also in this case it would be possible to give different importance even to the single tuples of coordinates too, as it has been proposed before for the 1D case. That would by sure introduce some overhead, so it has to be done only if the results won't be satisfactory enough otherwise. Finally that ``squeezing'' from n-D to 1D could be performed later on, in another layer. This action might have two concurring effects: from one side the computational effort of every training iteration is being increased, but from the other one less iterations might be needed to reach convergence, since the richness of the data is being kept ``alive" longer. \\
 These improvements haven't been introduced yet, since they go over the aims of the present project as they are outlined in the \hyperref[introduction]{introduction}. Notwithstanding this, it is worth noting that, especially in DNN programming, the more the code is enriched and exponentially the more tuning is necessary; in fact, not only the new choices must be tested, but also all their combinations with the previous hyper-parameters; so the above modifications, albeit quite simple conceptually, could require a slightly significant time to be implemented in an effective way.
 
-\newpage
 \section{The Optimizers class templates}\label{section3.3}
-In the {\ttfamily namespace Optimizers\{...\}} six class are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates. Moreover, in order to be able to use polymorphism so to let the user choose the desired optimizer runtime, they are all related by inheritance, following this hierarchy:
+In the {\ttfamily namespace Optimizers\{...\}}, defined in \textit{Optimizers.hpp}, six classes are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates. Moreover, in order to be able to use polymorphism, so to let the user choose the desired optimizer runtime, they are all related by inheritance, following this hierarchy:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{img/classes1}
 	\caption{single inheritance pattern}\label{fig9}
 \end{figure}
-\newpage \noindent As it was done at first, it might seem reasonable to imagine a logical structure like the one sketched here instead:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
+\newpage \noindent As it was done during early stages of the development, it might seem reasonable to imagine a logical structure like the one sketched here instead:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\textwidth]{img/classes2}
@@ -796,7 +796,7 @@ In the {\ttfamily namespace Optimizers\{...\}} six class are defined. Since they
 \end{figure}
 \noindent but in this last case the multiple inheritance parts would have involved deadlock diamonds, requiring virtual inheritance.\\
 Despite the last one being a possible choice, it has been decided to use only public single inheritance, employing only ``is a'' and ``has a'' relationships, so to keep the code as simple as possible, and also to avoid some overhead.\\
-Finally, in order to keep the correct encapsulation even in the single inheritance - Fig. \ref{fig9} design while guaranteeing {\ttfamily Adam<T>} access to its {\ttfamily RMSprop<T>} member {\ttfamily rms} members, class {\ttfamily RMSprop<T>} privately declares class {\ttfamily Adam<T>} as friend.\\
+Finally, in order to keep the correct encapsulation even in the single inheritance - Fig. \ref{fig9} design while guaranteeing {\ttfamily Adam<T>} class had the necessary access to the members of its {\ttfamily RMSprop<T>} member {\ttfamily rms}, class {\ttfamily RMSprop<T>} privately declares class {\ttfamily Adam<T>} as friend.\\
 \newline \noindent In the following we go a little deeper in some implementation details, class by class.\\
 The gradient descent class is straightforward, it's here reported for completeness since it's the base class:
 \begin{lstlisting}[frame=single]
@@ -815,8 +815,8 @@ public:
 	}
 };
 \end{lstlisting}
-\noindent Two decisions have been taken, mostly for ease: the template has been kept general, while it could have been specified a little more, using for example {\ttfamily Eigen::MatrixBase<T>}; and unused arguments have been passed to the overloaded call operator, so to have all the arguments that a general optimizer could need, in order to allow overriding in future derived classes.\\
-The gradient descent with momentum class is the first one that implements gradients estimation, for this reason it has a member which is of the same type of the gradient to be estimated:
+\noindent Of course it defines a virtual destructor, even if it doens't do any work more than the default one does, to allow objects in the inheritance hierarchy to be dynamically allocated. Two decisions have been taken, mostly for ease: the template has been kept general, while it could have been specified a little more, using for example {\ttfamily Eigen::MatrixBase<T>}; and unused arguments have been passed to the overloaded call operator, so to have all the arguments that a general optimizer could need, in order to allow overriding in future derived classes.\\
+\newline \noindent The gradient descent with momentum class is the first one that implements gradients estimation, for this reason it has a member which is of the same type of the gradient to be estimated:
 \begin{lstlisting}[frame=single]
 template<typename T>
 class GDwithMomentum : public GradientDescent<T>{
@@ -838,7 +838,7 @@ public:
 	}
 };
 \end{lstlisting}
-The RMSprop optimizer, besides updating in its own way the objective, it's the first to introduce a member, called espilon, which is not foreseen in the theory, and that it's here used to prevent division by zero, but also to be declared as final, and consequently to use {\ttfamily private} instead of {\ttfamily protected} in its definition: 
+\newpage \noindent The RMSprop optimizer, besides updating in its own way the objective, it's the first to introduce a member, named epsilon, which is not foreseen in the theory, and that it's here used to prevent division by zero. It's also the first class in the hierarchy to be declared as final, and consequently to use {\ttfamily private} instead of {\ttfamily protected} in its definition: 
 \begin{lstlisting}[frame=single]
 template<typename T>
 class RMSprop final : public GDwithMomentum<T>{
@@ -856,14 +856,13 @@ public:
 	}
 };
 \end{lstlisting}
-\noindent Of course, to allow declaring the Adam optimizer as friend class, it has been pre-declared before defining {\ttfamily RMSprop<T>}.\\
-The {\ttfamily KingmaBa<T>} class is the only abstract class of the hierarchy. It has been implemented to provide the common interface to two great optimizers, Adam and AdaMax, which have been introduced in the same article by \cite{Kingma}:
+\noindent Of course, to allow declaring the Adam optimizer as friend class, it has been pre-declared before the definition of {\ttfamily RMSprop<T>}.\\
+\newline\noindent The {\ttfamily KingmaBa<T>} class is the only abstract class of the hierarchy. It has been implemented to provide the common interface to two great optimizers, Adam and AdaMax, which have been recently introduced in the same article by \cite{Kingma}:
 \begin{lstlisting}[frame=single]
 template<typename T>
 class KingmaBa : public GDwithMomentum<T>{
 protected:
 	double beta2{0.999};
-
 public:
 	KingmaBa(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
 	
@@ -872,13 +871,15 @@ public:
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override = 0;
 };
 \end{lstlisting}
-\noindent The Adam optimizer includes an operation of elevation to the iteration number-th power, which is a non-negative integer. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary when the exponent is an integer, at first the {\ttfamily Adam<T>} class employed a function like this one:
-\begin{lstlisting}[frame=single]
-double mypow(double b, const std::size_t e){
-	for(std::size_t i=1; i<e; ++i)
-		b*=b;
-	return b;	
+\newpage\noindent The Adam optimizer includes an operation of elevation to the iteration number-th power, which is a non-negative integer. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary if the exponent is an integer, at first the {\ttfamily Adam<T>} class employed a function like this one:
+\begin{lstlisting}[frame=single, basicstyle=\fontsize{9}{11}\ttfamily]
+double mypow(const double b, const std::size_t e){
+	double ret{1.};
+	for(size_t i=0; i<e; ++i)
+		ret*=b;
+	return ret;
 }
+
 \end{lstlisting}
 But later on, compiling with optimization options, it turned out that, at least on the performed test, the standard library function was actually faster, with a total execution time of 4-5 seconds instead of 21-22 seconds on the used machine, and guaranteed a better result too, namely $~2\%$ instead of $~3.9\%$ relative $L_2$ error on the test set.\footnote{This seems to be due to the fact that the iteration number, that is the exponent, becomes early a large number, typical values' order of magnitude ranging from $10^4$ to $10^5$.}\\
 So the Adam optimizer has been implemented in this way:
@@ -890,23 +891,20 @@ private:
 	T correction_step(const double beta, const std::size_t t, const T & mt){
 		return ((1.0/(1.0-std::pow(beta,t)))*mt);
 	}
-
 public:
 	Adam(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), rms(m,n){}
-
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
 		//compute the momenta:
 		this->compute_momentum(gt);	//GDwithMomentum step
 		rms.set_beta(this->beta2);
 		rms.compute_momentum(gt.cwiseProduct(gt));//RMSprop step
-
 		//update:
 		this->update_objective(theta,( (correction_step(this->beta,t,this->mt)).cwiseProduct( ( 1./(rms.epsilon + sqrt((correction_step(this->beta2,t,rms.mt)).array())) ).matrix() )), alpha);
 	}	
 };
 \end{lstlisting}
-The above implementation doesn't follow strictly the one proposed in the literature: the correction step required by the algorithm has been composed with the update step, to enhance performance. Anyway, also the standard algorithm steps are present in the code, albeit commented out (not reported here to save space).\\
-Last, the AdaMax optimizer:
+The above implementation doesn't strictly follow the one proposed in the literature: the correction step required by the algorithm has been composed with the update step, so to enhance performance. Anyway, also the standard algorithm steps are present in the code, albeit commented out (not reported here to save space).\\
+\newline\noindent Last, the AdaMax optimizer:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 template<typename T>
 class AdaMax final : public KingmaBa<T>{
@@ -941,7 +939,8 @@ public:
 
 };
 \end{lstlisting}
-Notice that the epsilon member could have been avoided if multiple inheritance were used.
+Notice that the definition epsilon member could have been avoided if multiple inheritance were used.
+\newpage
 \section{Write\_set and datasets}\label{section3.4}
 The src/write\_set folder contains the source file write\_set.cpp, which is used to generate the training and test datasets.\\
 This is the first source file to rely to GetPot for the input phase:
@@ -965,14 +964,15 @@ int main(int argc, char** argv){
 	return 0;
 }
 \end{lstlisting}
-The first thing {\ttfamily main} does is to check the optional parameters passed runtime, if it finds {\ttfamily -h} or {\ttfamily --help} it calls the  help() function, that prints this:\\
+The first thing write\_set {\ttfamily main} does is to check the optional parameters passed runtime, if it finds {\ttfamily -h} or {\ttfamily --help} it calls the  help() function, that prints this:\\
 {\\\ttfamily \$ ./a.out -h  \\
 Run with ./a.out [options]\\
 Options:\\
 -h, --help: print this help\\
 -p, --parameters <filename>: reads parameters from <filename>,\\
           default filename = "./../../data/parameters.pot"\\\\}
-and returns; otherwise it reads the number of training and test samples from the parameters file, which can thus be changed without recompiling the program. The two datasets are then generated calling the following function, which currently generate a wave-packet-like function:
+and returns; otherwise it reads the number of training and test samples from the parameters file, which can thus be changed without recompiling the program. 
+\newpage\noindent The two datasets are then generated calling the following function, which currently generate a wave-packet-like function:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 constexpr double pi=4.*std::atan(1.);
 void write_set(string filename, const VectorXd & X, const char & separator = ' '){
@@ -989,13 +989,13 @@ To visualize them is possible to use the \cite{gnuplot} script ``PlotDataset.gnu
 Click any mouse button on selected data point to close}
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{img/TrainingSet70}
+	\includegraphics[width=0.95\textwidth]{img/TrainingSet70}
 	\caption{70 samples training set}
 \end{figure}
-
+\newpage
 \section{The main}
 The {\ttfamily main.cpp} source file takes into account for both execution of the main program and input/output operations.\\
-The input stage is managed analogously to {\ttfamily write\_set.cpp}, so for example we have:\\
+The input stage is managed analogously to {\ttfamily write\_set.cpp}, thus it's not reported here, for example we have:\\
 {\\ \ttfamily 
 	\$ ./main.out -h\\
 	Run with ./main.out [options]\\
@@ -1043,7 +1043,7 @@ After that, the network is constructed following the ``architecture.dat" file in
 NeuralNetwork nn(architecture);
 
 //Train the net:
-nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref,verbose);
+nn.train(TrainData,alpha,niter,W_opt,b_opt,tol,nref,verbose);
 
 //Load the test data:
 MatrixXd TestData(ntestdata,2);
@@ -1077,8 +1077,8 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 	return cout;
 } 
 \end{lstlisting}
-which redirect the {\ttfamily std::cout} stream buffer to the output file one (and then restore it) to save the y-coordinate of the predicted function.\\ 
-%This steps results in an output like the following:\\
+which redirects the {\ttfamily std::cout} stream buffer to the output file one (and then restore it) to store the y-coordinate only of the predicted function in the file.\\ 
+%This steps result in an output like the following:\\
 %{\\ \ttfamily 
 %	\$ ./main.out\\
 %	Total iterations = 16666\\
@@ -1100,13 +1100,13 @@ gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
 "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prevision))<<
 "w lp lw 1.5 title 'Prevision'"<<endl;
 \end{lstlisting}
-It's also possible to plot again this last graph without executing again the main program, indeed the data folder contains a ``PlotPrevision.gnu" gnuplot script too, which makes use of the {\ttfamily paste}\footnote{ see e.g. {\ttfamily \$ man paste}} GNU coreutil to avoid duplicates of the x-coordinate:
+It's also possible to plot in a second time this last graph without executing again the main program. Indeed, the data folder contains a ``PlotPrevision.gnu" gnuplot script too, which makes use of the {\ttfamily paste}\footnote{ see e.g. {\ttfamily \$ man paste}} GNU coreutil to avoid duplicates of the common x-coordinate:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 plot "LinspacedTestSet300.dat"	u 1:2 w lp lw 4 title "Test Data", \
 "< paste LinspacedTestSet300.dat yhat300.dat" u 1:3 w lp lw 1.5 title "Prevision"
 pause mouse "Click any mouse button on selected data point to close\n"
 \end{lstlisting}
-At the moment of writing some graphical functionalities, like adding the grid interactively from the plot window, are possible only when the ``PlotPrevision.gnu" script is used, due to current version gnuplot-iostream limitations.
+At the moment of writing, some graphical functionalities, like adding the grid interactively from the plot window, are possible only when the ``PlotPrevision.gnu" script is used, due to current version gnuplot-iostream limitations.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1116,14 +1116,19 @@ At the moment of writing some graphical functionalities, like adding the grid in
 \chapter{Examples}\label{chapter4}
 \setcounter{figure}{11}
 In this chapter we provide a complete example of building and running the program; some info are already reported in README.md.\\
-Here it is assumed that the user is in the directory neural-net, that employs the \cite{pacs} course modules, year 2018-2019, and that \cite{eigen} and \cite{boost} modules have been already loaded, e.g. like that:\\
+First of all the program can be obtained at \href{https://github.com/pjbaioni/neural-net}{GitHub}. It's suggested to clone the repository, for example if using https executing in a terminal window:\\
+{\\ \ttfamily 
+	\$ git clone https://github.com/pjbaioni/neural-net\\
+\\}
+that will create the folder neural-net in the current directory; otherwise, if downloading is preferred, it enough to go \href{https://github.com/pjbaioni/neural-net/archive/master.zip}{here}.\\
+In the following it is assumed that the user is in the directory neural-net, that employs the \cite{pacs} course modules, year 2018-2019, and that \cite{eigen} and \cite{boost} modules have been already loaded, e.g. like that:\\
 {\\ \ttfamily 
 	\$ source /u/sw/etc/bash.bashrc\\
 	\$ module load gcc-glibc/7\\
 	\$ module load eigen\\
 	\$ module load boost\\
 	\\}
-The program has been tested with the new modules too, in that case of course the second line above should be substitute with:\\
+The program has been tested with the new modules too, in that case of course the second line above should be substituted with:\\
 {\\ \ttfamily 
 	\$ module load gcc-glibc/9\\
 	\\}
@@ -1132,7 +1137,7 @@ Currently the last versions of the code have been tested only with modules, but 
 \section{Building}
 The main program is built through \cite{make}; in particular in the src folder this Makefile is placed:
 \begin{lstlisting}[frame=single]
-CXXFLAGS += -std=c++14 -Ofast
+CXXFLAGS += -std=c++14 -Ofast #-O3 #-ffast-math
 CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I$$mkBoostInc -I./../include/
 LDLIBS += -L$$mkBoostLib -lboost_filesystem -lboost_system -lboost_iostreams
 OUTPUT_OPTION=-o $@
@@ -1166,7 +1171,7 @@ run:
 	./$(EXE) $(OPTIONS)
 \end{lstlisting}
 which, beside defining some useful variables and phony calls, compiles the objects relying on implicit rules, and then links them explicitly.\\
-To build the program it's thus sufficient to run the makefile in the src folder:\\
+To build the program it's thus sufficient to run the makefile while being in the src folder:\\
 {\\ \ttfamily 
 	neural-net\$ cd src\\
 	src\$ make\\
@@ -1174,16 +1179,16 @@ To build the program it's thus sufficient to run the makefile in the src folder:
 Typing {\ttfamily make all} or {\ttfamily make build} will produce the same result. The expected output is:\\
 {\\ \ttfamily 
  src\$ make \\
-g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc -I./../include/  -c -o NeuralNetwork.o NeuralNetwork.cpp\\
-g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc -I./../include/  -c -o main.o main.cpp\\
-g++ -std=c++14 -Ofast -L\$mkBoostLib -lboost\_filesystem -lboost\_system -lboost\_iostreams NeuralNetwork.o main.o -o main.out\\
+g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o NeuralNetwork.o NeuralNetwork.cpp\\
+g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o main.o main.cpp\\
+g++ -std=c++14 -Ofast -L\$mkBoostLib -lboost\_filesystem\\ -lboost\_system -lboost\_iostreams NeuralNetwork.o main.o -o main.out\\
 	\\}
 Of course the program can be built even without Make; it's enough to copy and paste the three above instruction to the terminal.\\
-The program requires some data to be run, examples of which are already provided in the data folder. Input datafiles can be edited in any way, but, for what concerns the training and test datasets, the easiest one is to use the provided {\ttfamily write\_set.cpp} utility.\\
+\newline\noindent To be run, the program requires some data, examples of which are already provided in the data folder. Input datafiles can be edited in any way, but, for what concerns the training and test datasets, the easiest way is to use the provided {\ttfamily write\_set.cpp} utility.\\
 To do build it, while being in the src folder, it's enough to type:\\
 {\\ \ttfamily 
 	src\$ cd src/write\_set\\
-	write\_set\$ g++ -std=c++14 -I\$mkEigenInc -I./../../include/ write\_set.cpp\\
+	write\_set\$ g++ -std=c++14 -I\$mkEigenInc -I./../../include/\\ write\_set.cpp\\
 \\}
 Mind that, since it uses GetPot, if the only changes concern the numerosity of the datasets, after having built it once it's enough to change the ``parameters.pot" file in the data folder. As showed in section \ref{section3.4}: \\
 {\\ \ttfamily 
@@ -1192,10 +1197,10 @@ Mind that, since it uses GetPot, if the only changes concern the numerosity of t
 gives some info more about that.\\
 \newline\noindent For what concerns the modifications when modules are not used, for write\_set it's enough to change the line as:\\
 {\\ \ttfamily 
-	write\_set\$ g++ -std=c++14 -I/path/to/eigen/directory/ -I./../../include/ write\_set.cpp\\
+	write\_set\$ g++ -std=c++14 -I/path/to/eigen/directory/\\ -I./../../include/ write\_set.cpp\\
 \\}
-Similar changes, for the {\ttfamily -I} and {\ttfamily -L} directives, are required in the Makefile for the main program.
-
+Similar changes, for both the {\ttfamily -I} and the {\ttfamily -L} directives, are required in the Makefile for the main program.
+\newpage
 \section{Reconstruction of a wave packet}
 As first example of execution, the program is run using the provided datasets ``LinspacedTrainingSet70.dat" and ``LinspacedTestSet300.dat", using the architecture provided in ``architecture.dat".\\
 Having built the main program as in the previous section, while being in the src folder we tipe:\\
@@ -1204,9 +1209,9 @@ Having built the main program as in the previous section, while being in the src
 \\}
 which gives:\\
 {\\ \ttfamily 
-Total iterations = 16666\\
-Cost functional on the training set = 0.000157491\\
-Relative L2 error on test set = 0.00702565\\
+Total iterations = 70300\\
+Cost functional on the training set = 0.000127854\\
+Relative L2 error on test set = 0.00665947\\
 Output written on ./../data/yhat300.dat\\
 }
 \begin{figure}[H]
@@ -1214,28 +1219,34 @@ Output written on ./../data/yhat300.dat\\
 	\includegraphics[width=\textwidth]{img/Prevision300} 
 	\caption{Test1 - 300 samples}
 \end{figure}
-showing very good results. It has to be notice that, as anticipated in chapter \ref{chapter1}, actually the test set has to be just big enough to check the performance of the net. For this purpose the ``LinspacedTestSet30.dat" it's perfect, and indeed its output is:\\
+\noindent showing very good results. It might be noticed that, as anticipated in chapter \ref{chapter1}, actually the test set has to be just big enough to check the performance of the net. For this purpose the ``LinspacedTestSet30.dat" it's perfect, and indeed its output is:\\
 {\\ \ttfamily 
-	Total iterations = 16666\\
-	Cost functional on the training set = 0.000157491\\
-	Relative L2 error on test set = 0.00776613\\
+	Total iterations = 70300\\
+	Cost functional on the training set = 0.000127854\\
+	Relative L2 error on test set = 0.00722058\\
 	Output written on ./../data/yhat30.dat\\
 \\}
-The former however has been chosen as standard because the 30 samples test set gives rise to a too low resolution graph:
+However the 300 samples version has been chosen as standard because the 30 samples test set gives rise to a too low resolution graph:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{img/Prevision30} 
 	\caption{Test2 - 30 samples}
 \end{figure}
-\noindent To pass options to the main it's possible to use make, redefining the variable {\ttfamily OPTIONS} runtime, e.g.:
+\newpage \noindent It's also possible to pass options to the main by make, redefining the variable {\ttfamily OPTIONS} runtime, e.g.:\\
 {\\ \ttfamily 
 src \$ make run OPTIONS="--verbose" \\
 ./main.out --verbose\\
-t=25 cost=2.34785 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
-t=50 cost=2.70241 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
-t=75 cost=2.33865 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+t=100 cost=2.14956 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+t=200 cost=1.43787 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+t=300 cost=0.996626 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
 ...\\
-}
+t=24900 cost=0.000127942 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
+t=25000 cost=0.000127854 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
+Total iterations = 70300\\
+Cost functional on the training set = 0.000127854\\
+Relative L2 error on test set = 0.00665947\\
+Output written on ./../data/yhat300.dat\\
+\\}
 Some parameters can be changed editing the ``parameters.pot" file (or another one, and passing it's name to main):
 \begin{lstlisting}[frame=single,showstringspaces=false]
 ###########################################################
@@ -1259,10 +1270,10 @@ nlayers = 9
 alpha = 0.01
 
 # Maximum number of training iterations:
-niter = 50000
+niter = 75000
 
 # (Initial) Tolerance (for convergence check):
-tol = 0.0001
+tol = 0.001
 
 # Weights optimizer:
 # 0 = Gradient descent
@@ -1278,14 +1289,25 @@ b_opt = 3
 # Number of refinements for alpha decay:
 nref = 3
 \end{lstlisting}
-It's worth noting that not increasing the net size not necessarily results in a better performance. For example, if it is used as architecture {\ttfamily \{1, 14, 12, 11, 15, 11, 14, 13, 15, 12, 1\}}, that corresponds to a 1 reading and 10 working layers, the hidden ones with a random number of nodes between 11 and 15, the output on the same dataset is:\\
+It's worth noting that increasing the net size not necessarily results in a better performance. For example, if it is used as architecture {\ttfamily \{1, 14, 12, 11, 15, 11, 14, 13, 15, 12, 1\}}, that corresponds to a neural net composed by one reading and ten working layers, the hidden ones with a random number of nodes between 11 and 15, the output on the same dataset is:\\
 {\\ \ttfamily 
-Cost functional on the training set = 2.23205e-07\\
-Relative L2 error on test set = 0.0238545\\
-Output written on ./../data/yhat30.dat\\
+Total iterations = 75000\\
+Cost functional on the training set = 6.82184e-08\\
+Relative L2 error on test set = 0.0543924\\
+Output written on ./../data/yhat300.dat\\
 \\}
 meaning that the net is starting to overfit the training data, and thus to have difficulties to generalize to the unseen test data; on the contrary, if we take a more complex function, e.g. one with more oscillations, a deeper and bigger network will be needed to obtain good results.\\
 In very extreme underfitting and overfitting case, even NaNs and Infs can be appear, so in general a good procedure is to start with a smaller network, since in this case the result is produced faster, and then to add layers and nodes until the results starts to get worse.\\
+\newline\noindent As previously mentioned, it might happen that better results are achieved with an hand made piecewise constant learning rate decay. To do that it's enough to:
+\begin{enumerate}
+	\item\label{item:1} change the {\ttfamily train(...)} line in main.cpp so that it doesn't take {\ttfamily tol, nref} and {\ttfamily verbose}, and fix a low {\ttfamily alpha}, say $0.01$, and a large {\ttfamily niter}, say 25000;
+	\item execute the code, and notice at what iteration the cost starts to become constant or oscillating;
+	\item change the {\ttfamily niter} to that number;
+	\item add another training line with a lower {\ttfamily alpha}, for example $0.001$, and a large number of iterations, as at point \ref{item:1};
+	\item repeat until you get a good result.
+\end{enumerate}
+Of course, instead of doing as at point \ref{item:1}, parameters can be changed also in parameters.pot; for example point \ref{item:1} it's equivalent to put {\ttfamily nref}=1, {\ttfamily tol}=$-1.0$, {\ttfamily alpha}=0.01, {\ttfamily niter}=25000 and to run the code with the ``{\ttfamily -v}" (or ``{\ttfamily --verbose}") option.\\
+As last remark, it's worth underlining that changing the architecture will invalidate the optimality of the {\ttfamily alpha} and {\ttfamily niter} couples of hyper-parameters found following the above procedure.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1296,10 +1318,10 @@ In very extreme underfitting and overfitting case, even NaNs and Infs can be app
 \addcontentsline{toc}{chapter}{Conclusions}
 In the \hyperref[chapter1]{first chapter} of this report we have illustrated in detail the mechanism behind deep learning, going also over the surface for what concerns typical problems one encounters when designing a deep neural network, such as hyperparameter tuning and overfitting, proposing solutions like $L_2$ regularization and dropout and giving an idea of the scheme one can follow when tuning the network. Moreover we've showed how gradient descent can be extended to tackle deep learning problems, till arriving to Adam and AdaMax, which have been proposed the first time in 2015 and which are now employed in many different situations.\\
 In chapter \ref{chapter2} we have showed two main techniques which can be used to face PDEs problems by means of deep neural networks, as some interesting and useful theoretical results, following the most recent articles and reporting pros, like the ease of extension to more dimensions, aspects that require some care, like the treatment of BCs, and problems that are still open, in general related to the lack of a theoretical framework, implying among the others uncertainty about theoretical error bounds and appropriate values of hyperparameters.\\
-In chapters \ref{chapter3} and \ref{chapter4} we have focused on explaining how to develop from scratch a DNN based efficient and numerical analysis relevant application, exposing both the technicalities of the adopted algorithms and the design choices that have been taken, both in the details of the implementation and in the general architecture of the program. After this a complete benchmark case  has been presented, accompanied by comprehensive instructions on how to build and run the program.\\
-Before concluding, we notice that it isn't uncommon to find comparisons between results achievable with DNNs metods and FEMs, e.g. \cite{Jinchao} prove that in a 1D specific example a ReLU DNN can recover a better result, in terms of convergence accuracy, than adaptive finite element method. In such comparisons it's worth considering that the time required by a DNN-like approach is very different from the one of standard methods, indeed from one side tuning a DNN program properly requires a great amount of time, because even hyperparameters which have given great result in one field of application are often completely not suitable to the others, so a large number of combinations have to be tried; from the other side, once tuned and trained, the DNN is ready perform different test, and so to make all the predictions needed, just at the price of one forward propagation, while the FEM solver has to work every time from scratch.\\ 
+In chapters \ref{chapter3} and \ref{chapter4} we have focused on explaining how a DNN based efficient and numerical analysis relevant application has been developed from scratch, exposing both the technicalities of the adopted algorithms and the design choices that have been taken, both in the details of the implementation and in the general architecture of the program; some insights into expansions of possible interest have been discussed too. After this a complete benchmark case  has been presented, accompanied by comprehensive instructions on how to build and run the program.\\
+Before concluding, we notice that it isn't uncommon to find comparisons between results achievable with DNNs methods and classical ones, for example \cite{Jinchao} prove that in a 1D specific example a ReLU DNN can recover a better result, in terms of convergence accuracy, than adaptive finite element method, while \cite{Weinan} show that with fewer parameters, their DNN based method gives more accurate solution than the finite difference method . In such comparisons it's worth considering that the time required by a DNN-like approach is very different from the one of standard methods, indeed from one side tuning a DNN program properly requires a large amount of time, because even hyperparameters which have given great results in one field of application are often completely not suitable to the others, so a considerably high number of combinations have to be tried; from the other side, once tuned and trained, the DNN it's always ready to perform different tests, and so to make all the predictions needed, just at the price of one forward propagation, while a standard solver has to work every time from scratch.\\ 
 Considering all these aspect, we can certainly conclude that deep learning is a very promising and interesting field even for numerical analysis, both from the theoretical and from the applications point of view.\\
-Moreover, its completely specific time scales makes it particularly adapt to find its natural space in the standard procedure of computational science and engineering: if we have an engineering machine or a scientific experiment on which we have to able to operate in very short times, for example to perform rapid slight changes to the configuration in response to sudden perturbations so to guarantee the stability of the system, we start proceeding with the mathematical modeling of the physical problem, we analyze it theoretically and then we move to numerical analysis and finally to programming for example a FEM code. At this point we can design a DNN based solver which we train on the solutions we have found with traditional methods. In this way we end up with a software which is able to find in very short times, the time of just one forward propagation, solutions to the model when the data, i.e. the physical situation, has changed a little, providing in such a way a powerful tool for the real-time control of the state of the machine or of the experiment.
+Moreover, its completely specific time scales makes it particularly adapt to find its natural space in the standard procedure of computational science and engineering: if we have an engineering machine or a scientific experiment on which we have to able to operate in very short times, for example to perform rapid slight changes to the configuration in response to sudden perturbations so to guarantee the stability of the system, we start proceeding with the mathematical modeling of the physical problem, we analyze it theoretically and then we move to numerical analysis and finally to programming for example a FEM code. At this point we can design a DNN based solver which we train on the solutions we have found with the previous methods. In this way we end up with a software which is able to find in very short times, the time of just one forward propagation, solutions to the model when the data, i.e. the physical situation, has changed a little, providing in such a way a powerful tool for the real-time control of the state of the machine or of the experiment.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
