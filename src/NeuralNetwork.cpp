@@ -31,8 +31,8 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 }
 
 //Training function:
-void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, double tolerance
-                          , const size_t W_opt, const size_t b_opt, const size_t nrefinements, const bool verbose){                     
+void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, const size_t W_opt,
+                          const size_t b_opt, double tolerance, const size_t nrefinements, const bool verbose){                     
 	///////////////////
 	//      Init     //
 	///////////////////
@@ -147,11 +147,13 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 			/////////////////////////
 			//Output the current cost
 			//and check if convergence is reached:
-			if( verbose && (t%25==0) ){
-				cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
+			
+			if( t%100==0 ){
+				if(verbose) 
+					cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
 				err = abs(old_cost-cost) / ( (cost+old_cost)/2 );
 				if(err<tolerance){
-					backup_t.push_back(t);
+					backup_t[ref-1]=t;
 					break;
 				}
 				else
@@ -193,9 +195,10 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, dou
 	//////////////////////////
 	//     Final output     //
 	//////////////////////////
-	backup_t[nrefinements-1] == 0 ? 
-		cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)+niter<<"\n"<<"Cost functional on the training set = "<<cost<<endl :
-		cout<<"Total iterations = "<<accumulate(backup_t.begin(), backup_t.end(), 0)<<"\n"<<"Cost functional on the training set = "<<cost<<endl;
+	size_t total_iter=0;
+	for(const auto & r: backup_t)
+		r == 0 ? total_iter += niter : total_iter += r;
+	cout<<"Total iterations = "<<total_iter<<"\n"<<"Cost functional on the training set = "<<cost<<endl;
 		
 }//End of the train function
 

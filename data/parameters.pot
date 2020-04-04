@@ -19,10 +19,10 @@ nlayers = 9
 alpha = 0.01
 
 # Maximum number of training iterations:
-niter = 50000
+niter = 75000
 
 # (Initial) Tolerance (for convergence check):
-tol = 0.0001
+tol = 0.001
 
 # Weights optimizer:
 # 0 = Gradient descent

@@ -91,7 +91,7 @@ int main(int argc, char** argv){
 	NeuralNetwork nn(architecture);
 	
 	//Train the net:
-	nn.train(TrainData,alpha,niter,tol,W_opt,b_opt,nref,verbose);
+	nn.train(TrainData,alpha,niter,W_opt,b_opt,tol,nref,verbose);
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
