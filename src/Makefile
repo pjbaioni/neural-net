@@ -1,4 +1,4 @@
-CXXFLAGS += -std=c++14 -Ofast#-O3 -ffast-math
+CXXFLAGS += -std=c++14 -Ofast#-O3 #-ffast-math
 CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I$$mkBoostInc -I./../include/
 LDLIBS += -L$$mkBoostLib -lboost_filesystem -lboost_system -lboost_iostreams
 OUTPUT_OPTION=-o $@
