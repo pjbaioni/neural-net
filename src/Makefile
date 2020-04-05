@@ -6,7 +6,7 @@ EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:%.cpp=%.o)
-OPTIONS=minimal_output
+OPTIONS=#if_empty_minimal_output
 
 main.o: $(HEADERS) $(SRCS)
 NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
