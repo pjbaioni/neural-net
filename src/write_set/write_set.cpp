@@ -9,6 +9,10 @@
 using namespace std;
 using Eigen::VectorXd;
 
+//compile with:
+//g++ -std=c++14 -I$mkEigenInc -I./../../include/ write_set.cpp
+
+
 constexpr double pi=4.*std::atan(1.);
 
 void write_set(string filename, const VectorXd & X, const char & separator = ' '){
@@ -29,7 +33,7 @@ ostream & help(){
 
 
 int main(int argc, char** argv){
-	GetPot commandline(argc,argv); cout<<endl;
+	GetPot commandline(argc,argv);
 	if(commandline.search(2,"-h","--help")){
 		help()<<endl;
 		return 0;
@@ -40,9 +44,10 @@ int main(int argc, char** argv){
 	const size_t ntest = datafile("ntestdata", 30);
 	VectorXd X;
 	X.setLinSpaced(ntrain,-1.5,1.5);
-	string file1{"./../../data/LinspacedTrainingSet"+to_string(ntrain)}, file2{"./../../data/LinspacedTestSet"+to_string(ntest)};
+	string file1{"./../../data/TrainingSet"+to_string(ntrain)}, file2{"./../../data/TestSet"+to_string(ntest)};
 	write_set(file1+".dat",X);
 	X.setLinSpaced(ntest,-1.5,1.5);
 	write_set(file2+".dat",X);
+	cout<<"Done"<<endl;
 	return 0;
 }

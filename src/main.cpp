@@ -64,27 +64,27 @@ int main(int argc, char** argv){
 	
 	GetPot datafile(param_filename.c_str());
 	size_t ntraindata = datafile("ntraindata", 70);
-	string train_filename = datafile("train_filename", "./../data/LinspacedTrainingSet70.dat");
+	string train_filename{"./../data/TrainingSet"+to_string(ntraindata)};
 	size_t ntestdata = datafile("ntestdata", 30);
-	string test_filename = datafile("test_filename", "./../data/LinspacedTestSet300.dat");
+	string test_filename{"./../data/TestSet"+to_string(ntestdata)};
 	size_t nlayers = datafile("nlayers", 9);
-	string architecture_filename = datafile("architecture_filename", "./../data/architecture.dat");
+	string architecture_filename {"./../data/architecture"+to_string(nlayers)};
 	double alpha = datafile("alpha",1e-2);
 	size_t niter = datafile("niter",500000);
 	double tol = datafile("tol",1e-4);
 	size_t W_opt = datafile("W_opt",4);
 	size_t b_opt = datafile("b_opt",3);
 	size_t nref = datafile("nref",3);
-	string prevision_filename = datafile("prevision_filename", "./../data/yhat300.dat");
+	string prevision_filename{"./../data/yhat"+to_string(ntestdata)};
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
-	bool read=read_set(train_filename,TrainData);
+	bool read=read_set(train_filename+".dat",TrainData);
 	if(!read) return -1;
 
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
-	read=read_set(architecture_filename,architecture);
+	read=read_set(architecture_filename+".dat",architecture);
 	if(!read) return -1;
 	
 	//Construct the net:
@@ -95,7 +95,7 @@ int main(int argc, char** argv){
 	
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
-	read=read_set(test_filename,TestData);
+	read=read_set(test_filename+".dat",TestData);
 	if(!read) return -1;
 	
 	//Test the net:
@@ -105,7 +105,7 @@ int main(int argc, char** argv){
 	
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
-	write_vector(prevision_filename,yhat)<<"\n"<<endl;
+	write_vector(prevision_filename+".dat",yhat)<<"\n"<<endl;
 	
 	Gnuplot gp;
 	//first way:
