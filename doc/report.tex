@@ -8,7 +8,6 @@
 \theoremstyle{definition}
 \newtheorem{Example}{Example}
 \newtheorem{Theorem}{Theorem}
-\newtheorem{ToDo}{ToDo}
 
 \usepackage{varioref,hyperref,cleveref}
 \usepackage[pdftex]{graphicx}
@@ -957,7 +956,7 @@ int main(int argc, char** argv){
 	const size_t ntest = datafile("ntestdata", 30);
 	VectorXd X;
 	X.setLinSpaced(ntrain,-1.5,1.5);
-	string file1{"./../../data/LinspacedTrainingSet"+to_string(ntrain)}, file2{"./../../data/LinspacedTestSet"+to_string(ntest)};
+	string file1{"./../../data/TrainingSet"+to_string(ntrain)}, file2{"./../../data/TestSet"+to_string(ntest)};
 	write_set(file1+".dat",X);
 	X.setLinSpaced(ntest,-1.5,1.5);
 	write_set(file2+".dat",X);
@@ -1009,12 +1008,12 @@ So after a first GetPot based input phase, the training dataset and the architec
 \begin{lstlisting}[frame=single]
 //Load the training data:
 MatrixXd TrainData(ntraindata,2);
-bool read=read_set(train_filename,TrainData);
+bool read=read_set(train_filename+".dat",TrainData);
 if(!read) return -1;
 
 //Load the net architecture:
 VectorXs architecture(nlayers);
-read=read_set(architecture_filename,architecture);
+read=read_set(architecture_filename+".dat",architecture);
 if(!read) return -1;
 \end{lstlisting}
 Since the reading has to work both with matrices and vectors, the read\_set function has been implemented as a function template, so to work with any matrix-like type which implements the overload of the call operator for accessing the elements:
@@ -1047,7 +1046,7 @@ nn.train(TrainData,alpha,niter,W_opt,b_opt,tol,nref,verbose);
 
 //Load the test data:
 MatrixXd TestData(ntestdata,2);
-read=read_set(test_filename,TestData);
+read=read_set(test_filename+".dat",TestData);
 if(!read) return -1;
 
 //Test the net:
@@ -1061,7 +1060,7 @@ First the numerical results are output on the terminal window and the predicted 
 \begin{lstlisting}[frame=single, showstringspaces=false]
 //Print the results:
 cout<<"Relative L2 error on test set = "<<errL2<<endl;
-write_vector(prevision_filename,yhat)<<"\n"<<endl;
+write_vector(prevision_filename+".dat",yhat)<<"\n"<<endl;
 \end{lstlisting}
 by means of the {\ttfamily write\_vector()} function:
 \begin{lstlisting}[frame=single, showstringspaces=false]
@@ -1145,7 +1144,7 @@ EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:%.cpp=%.o)
-OPTIONS=minimal_output
+OPTIONS=#if_empty_minimal_output
 
 main.o: $(HEADERS) $(SRCS)
 NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
@@ -1234,8 +1233,8 @@ However the 300 samples version has been chosen as standard because the 30 sampl
 \end{figure}
 \newpage \noindent It's also possible to pass options to the main by make, redefining the variable {\ttfamily OPTIONS} runtime, e.g.:\\
 {\\ \ttfamily 
-src \$ make run OPTIONS="--verbose" \\
-./main.out --verbose\\
+src \$ make run OPTIONS=-p="parameters.pot" OPTIONS+="--verbose"\\
+./main.out -p=parameters.pot --verbose\\
 t=100 cost=2.14956 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
 t=200 cost=1.43787 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
 t=300 cost=0.996626 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
