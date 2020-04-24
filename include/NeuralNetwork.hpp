@@ -35,8 +35,8 @@ private:
 	std::vector<Eigen::VectorXd> db;	//db[l]=d(cost)/d(b[l])=...=B*d(output[l])/(db[l])
 	
 	//Optimizers:
-	std::vector<std::shared_ptr<Optimizers::GradientDescent<Eigen::MatrixXd>>> W_optimizer;
-	std::vector<std::shared_ptr<Optimizers::GradientDescent<Eigen::VectorXd>>> b_optimizer;
+	std::vector<std::unique_ptr<Optimizers::GradientDescent<Eigen::MatrixXd>>> W_optimizer;
+	std::vector<std::unique_ptr<Optimizers::GradientDescent<Eigen::VectorXd>>> b_optimizer;
 	
 public:
 	
