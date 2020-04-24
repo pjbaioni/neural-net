@@ -37,7 +37,12 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 	cout<<X;
 	out_file.close();
 	cout.rdbuf(stream_buffer_cout);
-	cout<<"Output written on "<<ofsname;
+	cout<<"Output written on ";
+	try{
+		cout<<ofsname.substr(5, 50);
+  }catch(const std::out_of_range& e){
+  	std::cout << "pos exceeds string size\n";
+  }
 	return cout;
 } 
 
