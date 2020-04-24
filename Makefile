@@ -1,6 +1,6 @@
-SUBDIRS = ./src
+SUBDIRS = ./src ./src/write_set
 
-.PHONY: all build clean distclean run
+.PHONY: all build clean distclean help run verbose
 .DEFAULT_GOAL = build
 all: build
 build:
@@ -8,14 +8,21 @@ build:
   make build -C $$dir ; \
   done
 clean:
-	for dir in $(SUBDIRS) ; do \
-  make clean -C $$dir ; \
-  done
+	$(MAKE) clean -C ./src
 distclean:
 	for dir in $(SUBDIRS) ; do \
   make distclean -C $$dir ; \
   done
+help:
+	@echo "Type:" 
+	@echo " - make, make all or make build to build"
+	@echo " - make clean to remove objects"
+	@echo " - make distclean to clean and to remove executables"
+	@echo " - make run to run the main program"
+	@echo " - make verbose to run the main program in verbose mode"
 run:
-	make run -C ./src
+	$(MAKE) run -C ./src
+verbose:
+	cd ./src && ./main.out --verbose
  
 
