@@ -5,13 +5,13 @@ SUBDIRS = ./src ./src/write_set
 all: build
 build:
 	for dir in $(SUBDIRS) ; do \
-  make build -C $$dir ; \
+  $(MAKE) build -C $$dir ; \
   done
 clean:
 	$(MAKE) clean -C ./src
 distclean:
 	for dir in $(SUBDIRS) ; do \
-  make distclean -C $$dir ; \
+  $(MAKE) distclean -C $$dir ; \
   done
 help:
 	@echo "Type:" 
