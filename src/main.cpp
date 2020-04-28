@@ -146,9 +146,13 @@ int main(int argc, char** argv){
 	//second way
 	vector<double> prevision(yhat.data(), yhat.data() + yhat.rows()*yhat.cols());
 	//plot:
+	xspacing == 0 ?
 	gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
   "w lp lw 4 title 'Test Data',"<< gp.file1d(std::tie(xtest,prevision))<<
-  "w lp lw 1.5 title 'Prevision'"<<endl;
+  "w lp lw 1.5 title 'Prevision'"<<endl :
+	gp<<"plot"<<gp.file1d(std::tie(xtest,ytest))<<
+  "pt 7 title 'Test Data',"<< gp.file1d(std::tie(xtest,prevision))<<
+  "pt 3 title 'Prevision'"<<endl;
 	
 	return 0;
 } 
