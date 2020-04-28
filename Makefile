@@ -1,6 +1,6 @@
 SUBDIRS = ./src/write_set ./src
 
-.PHONY: all build clean distclean help run test1 test2 test3 verbose_run
+.PHONY: all build clean distclean help run test1 test2 test3 test4 test5 verbose_run
 .DEFAULT_GOAL = build
 all: build
 build:
@@ -19,10 +19,9 @@ help:
 	@echo " - make clean to remove objects"
 	@echo " - make distclean to clean and to remove executables and generated datafiles"
 	@echo " - make run to run the main program with default parameters and options"
-	@echo " - make test1 to execute the first test case"
-	@echo " - make test2 to execute the second test case"
-	@echo " - make test3 to execute the third test case"
+	@echo " - make test<number> to execute the number-th test case"
 	@echo " - make verbose_run to do as make run but in verbose mode"
+	@echo "See /doc/report.pdf for more informations"
 run:
 	for dir in $(SUBDIRS) ; do \
   $(MAKE) run -C $$dir ; \
@@ -36,6 +35,12 @@ test2:
 test3:
 	cd ./src/write_set && ./write_set.out -p "./../../data/test3.pot"
 	cd ./src && ./main.out -p "./../data/test3.pot"
+test4:
+	cd ./src/write_set && ./write_set.out -p "./../../data/test4.pot"
+	cd ./src && ./main.out -p "./../data/test4.pot"
+test5:
+	cd ./src/write_set && ./write_set.out -p "./../../data/test5.pot"
+	cd ./src && ./main.out -p "./../data/test5.pot"
 verbose_run:
 	$(MAKE) run -C ./src/write_set
 	cd ./src && ./main.out --verbose

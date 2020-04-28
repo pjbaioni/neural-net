@@ -13,13 +13,13 @@ ntraindata = 70
 ntestdata = 300
 
 # Number of layers:
-nlayers = 9
+nlayers = 5
 
 # (Initial) learning rate:
 alpha = 0.01
 
 # Maximum number of training iterations:
-niter = 75000
+niter = 37500
 
 # (Initial) Tolerance (for convergence check):
 tol = 0.001
@@ -39,10 +39,10 @@ b_opt = 3
 nref = 3
 
 # frequence of the wave:
-omega = 5.
+omega = 0.
 
 # phase of the wave:
-phi = 0.
+phi = 0.5
 
 # Kind of dataset:
 # 0 Linspaced

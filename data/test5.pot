@@ -13,13 +13,13 @@ ntraindata = 70
 ntestdata = 300
 
 # Number of layers:
-nlayers = 9
+nlayers = 15
 
 # (Initial) learning rate:
 alpha = 0.01
 
 # Maximum number of training iterations:
-niter = 75000
+niter = 150000
 
 # (Initial) Tolerance (for convergence check):
 tol = 0.001
@@ -48,4 +48,4 @@ phi = 0.
 # 0 Linspaced
 # 1 Uniform random
 # 2 Normal random
-xspacing = 0
+xspacing = 2
