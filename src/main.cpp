@@ -52,7 +52,7 @@ ostream & help(){
 	cout<<"Run with ./main.out [options]\n";
 	cout<<"Options:\n-h, --help: print this help\n-v, --verbose: activate verbose mode\n";
 	cout<<"-p, --parameters <filename>: reads parameters from <filename>,\n";
-	cout<<"          default filename = \"./../data/parameters.pot\"\n ";
+	cout<<"          default filename = \"./../data/Parameters.pot\"\n ";
 	return cout;
 }
 
@@ -60,45 +60,49 @@ int main(int argc, char** argv){
 	
 	//Get data:
 	GetPot commandline(argc,argv);
-	string param_filename = commandline.follow("./../data/parameters.pot",2,"-p","--parameters");
+	string param_filename = commandline.follow("./../data/Parameters.pot",2,"-p","--parameters");
 	if(commandline.search(2,"-h","--help")){
 		help()<<endl;
 		return 0;
 	}
-	cout<<endl;
-	bool verbose = commandline.search(2,"-v","--verbose");
+	string train_filename{"./../data/TrainingSet" + param_filename.substr(10, param_filename.size()-10-4)};
+	string test_filename{"./../data/TestSet" + param_filename.substr(10, param_filename.size()-10-4)};
+	string prevision_filename{"./../data/Yhat" + param_filename.substr(10, param_filename.size()-10-4)}; 
+	bool verbose = commandline.search(2,"-v","--verbose"); 
 	
 	GetPot datafile(param_filename.c_str());
 	
 	size_t ntraindata = datafile("ntraindata", 70);
-	string train_filename{"./../data/TrainingSet"+to_string(ntraindata)};
 	size_t ntestdata = datafile("ntestdata", 30);
-	string test_filename{"./../data/TestSet"+to_string(ntestdata)};
-	string prevision_filename{"./../data/yhat"+to_string(ntestdata)};
-	
 	const size_t xspacing = datafile("xspacing",0);
-	switch(xspacing){
-		default:
-			train_filename += "Linspaced";
-			test_filename += "Linspaced";
-			prevision_filename += "Linspaced";
-			break;
-		case 1:
-			train_filename += "Uniform";
-			test_filename += "Uniform";
-			prevision_filename += "Uniform";
-			break;
-		case 2:
-			train_filename += "Normal";
-			test_filename += "Normal";
-			prevision_filename += "Normal";
-			break;
-	}
-	const double omega = datafile("omega",5.);
-	const double phi = datafile("phi",0.);
-	train_filename += to_string(omega); train_filename += to_string(phi);
-	test_filename += to_string(omega); test_filename += to_string(phi);
-	prevision_filename += to_string(omega); prevision_filename += to_string(phi);
+	
+	#ifndef NDEBUG
+		test_filename += to_string(ntestdata)};
+		prevision_filename += to_string(ntestdata)};
+		train_filename += to_string(ntraindata)};
+		switch(xspacing){
+			default:
+				train_filename += "Linspaced";
+				test_filename += "Linspaced";
+				prevision_filename += "Linspaced";
+				break;
+			case 1:
+				train_filename += "Uniform";
+				test_filename += "Uniform";
+				prevision_filename += "Uniform";
+				break;
+			case 2:
+				train_filename += "Normal";
+				test_filename += "Normal";
+				prevision_filename += "Normal";
+				break;
+		}
+		const double omega = datafile("omega",5.);
+		const double phi = datafile("phi",0.);
+		train_filename += to_string(omega); train_filename += to_string(phi);
+		test_filename += to_string(omega); test_filename += to_string(phi);
+		prevision_filename += to_string(omega); prevision_filename += to_string(phi);
+	#endif
 	
 	size_t nlayers = datafile("nlayers", 9);
 	string architecture_filename {"./../data/architecture"+to_string(nlayers)};
@@ -112,7 +116,7 @@ int main(int argc, char** argv){
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
 	bool read=read_set(train_filename+".dat",TrainData);
-	if(!read) return -1;
+	assert(read);
 
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
@@ -137,7 +141,7 @@ int main(int argc, char** argv){
 	
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
-	write_vector(prevision_filename+".dat",yhat)<<"\n"<<endl;
+	write_vector(prevision_filename+".dat",yhat)<<endl;
 	
 	Gnuplot gp;
 	//first way:

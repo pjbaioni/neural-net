@@ -27,20 +27,20 @@ run:
   $(MAKE) run -C $$dir ; \
   done
 test1:
-	cd ./src/write_set && ./write_set.out -p "./../../data/test1.pot"
-	cd ./src && ./main.out -p "./../data/test1.pot"
+	cd ./src/write_set && ./write_set.out -p "./../../data/Test1.pot"
+	cd ./src && ./main.out -p "./../data/Test1.pot"
 test2:
-	cd ./src/write_set && ./write_set.out -p "./../../data/test2.pot"
-	cd ./src && ./main.out -p "./../data/test2.pot"
+	cd ./src/write_set && ./write_set.out -p "./../../data/Test2.pot"
+	cd ./src && ./main.out -p "./../data/Test2.pot"
 test3:
-	cd ./src/write_set && ./write_set.out -p "./../../data/test3.pot"
-	cd ./src && ./main.out -p "./../data/test3.pot"
+	cd ./src/write_set && ./write_set.out -p "./../../data/Test3.pot"
+	cd ./src && ./main.out -p "./../data/Test3.pot"
 test4:
-	cd ./src/write_set && ./write_set.out -p "./../../data/test4.pot"
-	cd ./src && ./main.out -p "./../data/test4.pot"
+	cd ./src/write_set && ./write_set.out -p "./../../data/Test4.pot"
+	cd ./src && ./main.out -p "./../data/Test4.pot"
 test5:
-	cd ./src/write_set && ./write_set.out -p "./../../data/test5.pot"
-	cd ./src && ./main.out -p "./../data/test5.pot"
+	cd ./src/write_set && ./write_set.out -p "./../../data/Test5.pot"
+	cd ./src && ./main.out -p "./../data/Test5.pot"
 verbose_run:
 	$(MAKE) run -C ./src/write_set
 	cd ./src && ./main.out --verbose

@@ -25,7 +25,7 @@ ostream & help(){
 	cout<<"Run with ./a.out [options]\n";
 	cout<<"Options:\n-h, --help: print this help\n";
 	cout<<"-p, --parameters <filename>: reads parameters from <filename>,\n";
-	cout<<"          default filename = \"./../../data/parameters.pot\"\n ";
+	cout<<"          default filename = \"./../../data/Parameters.pot\"\n ";
 	return cout;
 }
 
@@ -33,19 +33,25 @@ void init_spacing(VectorXd & X, const size_t n, const size_t xspacing, string & 
 	switch(xspacing){
 		default:
 			X.setLinSpaced(n,-1.5,1.5);
-			filename += "Linspaced";
+			#ifndef NDEBUG
+				filename += "Linspaced";
+			#endif
 			break;
 		case 1:
 			X = VectorXd::Random(n);
 			X = X * 1.5;
-			filename += "Uniform";
+			#ifndef NDEBUG
+				filename += "Uniform";
+			#endif
 			break;
 		case 2:
 		 	default_random_engine gen;
 		  normal_distribution<double> dist(0.,.75);
 		  auto gaussian = [&dist, &gen] (double) {return dist(gen);};
 			X = VectorXd::NullaryExpr(n, gaussian);
-			filename += "Normal";
+			#ifndef NDEBUG
+				filename += "Normal";
+			#endif
 			break;
 	}
 }
@@ -56,7 +62,7 @@ int main(int argc, char** argv){
 		help()<<endl;
 		return 0;
 	}
-	const string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
+	const string param_filename = commandline.follow("./../../data/Parameters.pot",2,"-p","--parameters");
 	#ifndef NDEBUG
 		cout<<"Reading data from "<<param_filename<<endl;
 	#endif
@@ -75,24 +81,29 @@ int main(int argc, char** argv){
 		cout<<phi<<endl;
 	#endif
 	
-	string filename{"./../../data/TrainingSet"+to_string(ntrain)};
 	VectorXd X;
+	string filename{"./../../data/TrainingSet" + param_filename.substr(13, param_filename.size()-13-4)};
 	init_spacing(X, ntrain, xspacing, filename);
-	filename += to_string(omega);
-	filename += to_string(phi);
-	write_set(filename+".dat", X, omega, phi);
 	#ifndef NDEBUG
-			cout<<"Writing "<<filename<<".dat"<<endl;
+		filename += to_string(ntrain);
+		filename += to_string(omega);
+		filename += to_string(phi);
 	#endif
+	cout<<"Writing "<<filename<<".dat"<<endl;
+	write_set(filename+".dat", X, omega, phi);
 	
-	filename = "./../../data/TestSet"+to_string(ntest);
+	filename = "./../../data/TestSet" + param_filename.substr(13, param_filename.size()-13-4);
 	init_spacing(X, ntest, xspacing, filename);
-	filename += to_string(omega);
-	filename += to_string(phi);
-	write_set(filename+".dat", X, omega, phi);
+
 	#ifndef NDEBUG
-		cout<<"Writing "<<filename<<".dat"<<endl;
+		filename += to_string(ntest);
+		filename += to_string(omega);
+		filename += to_string(phi);
 	#endif
+	cout<<"Writing "<<filename<<".dat"<<endl;
+	write_set(filename+".dat", X, omega, phi);
+	
 	cout<<"Done"<<endl;
+	
 	return 0;
 }
