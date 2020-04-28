@@ -37,3 +37,15 @@ b_opt = 3
 
 # Number of refinements for alpha decay:
 nref = 3
+
+# frequence of the wave:
+omega = 5.
+
+# phase of the wave:
+phi = 0.
+
+# Kind of dataset:
+# 0 Linspaced
+# 1 Uniform random
+# 2 Normal random
+xspacing = 0
