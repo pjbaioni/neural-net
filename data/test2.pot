@@ -1,0 +1,51 @@
+#####################################################################
+############## Runtime data for Neural Network - main ###############
+#####################################################################
+
+# When tuning the net, it's better to start from alpha and architecture
+# keeping others parameters s.t. the program runs long enough, with
+# nrefinements = 1. 
+
+# Number of training samples:
+ntraindata = 70
+
+# Number of test samples:
+ntestdata = 300
+
+# Number of layers:
+nlayers = 9
+
+# (Initial) learning rate:
+alpha = 0.01
+
+# Maximum number of training iterations:
+niter = 75000
+
+# (Initial) Tolerance (for convergence check):
+tol = 0.001
+
+# Weights optimizer:
+# 0 = Gradient descent
+# 1 = Gradient descent with momentum
+# 2 = RMS prop
+# 3 = Adam
+# 4 = AdaMax
+W_opt = 4
+
+# biases optimizer (values as above):
+b_opt = 3
+
+# Number of refinements for alpha decay:
+nref = 3
+
+# frequence of the wave:
+omega = 5.
+
+# phase of the wave:
+phi = 0.
+
+# Kind of dataset:
+# 0 Linspaced
+# 1 Uniform random
+# 2 Normal random
+xspacing = 0
