@@ -13,9 +13,9 @@ using Eigen::VectorXd;
 
 constexpr double pi=4.*std::atan(1.);
 
-void write_set(string filename, const VectorXd & X, const double omega, const char & separator = ' '){
+void write_set(string filename, const VectorXd & X, const double omega, const double phi, const char & separator = ' '){
 	ofstream ofs(filename);
-	auto u = [omega] (const double & x) {return exp(-x*x*5)*sin(omega*pi*x);};	
+	auto u = [&omega, &phi] (const double & x) {return exp(-x*x*5)*sin(omega*pi*x + phi*pi);};	
 	for(size_t i=0; i<X.rows(); ++i)
 		ofs<<X(i)<<separator<<u(X(i))<<"\n";
 	ofs.close();
@@ -63,17 +63,20 @@ int main(int argc, char** argv){
 	const size_t ntest = datafile("ntestdata", 30);
 	const size_t xspacing = datafile("xspacing",0);
 	const double omega = datafile("omega",5.);
+	const double phi = datafile("phi",0.);
 	
 	string filename{"./../../data/TrainingSet"+to_string(ntrain)};
 	VectorXd X;
 	init_spacing(X, ntrain, xspacing, filename);
 	filename += to_string(omega);
-	write_set(filename+".dat", X, omega);
+	filename += to_string(phi);
+	write_set(filename+".dat", X, omega, phi);
 	
 	filename = "./../../data/TestSet"+to_string(ntest);
 	init_spacing(X, ntest, xspacing, filename);
 	filename += to_string(omega);
-	write_set(filename+".dat", X, omega);
+	filename += to_string(phi);
+	write_set(filename+".dat", X, omega, phi);
 	
 	cout<<"Done"<<endl;
 	return 0;
