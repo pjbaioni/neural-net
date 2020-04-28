@@ -1,5 +1,5 @@
 CXXFLAGS += -std=c++14 -O3
-CPPFLAGS += -I$$mkEigenInc -I./../../include/
+CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I./../../include/
 OUTPUT_OPTION = -o $@
 EXE = write_set.out
 GENERATED_DATA = ./../../data/Train*.dat

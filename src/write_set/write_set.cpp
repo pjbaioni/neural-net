@@ -56,14 +56,24 @@ int main(int argc, char** argv){
 		help()<<endl;
 		return 0;
 	}
-	string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
+	const string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
+	#ifndef NDEBUG
+		cout<<"Reading data from "<<param_filename<<endl;
+	#endif
 	
 	GetPot datafile(param_filename.c_str());
-	const size_t ntrain = datafile("ntraindata", 70);
-	const size_t ntest = datafile("ntestdata", 30);
-	const size_t xspacing = datafile("xspacing",0);
-	const double omega = datafile("omega",5.);
-	const double phi = datafile("phi",0.);
+	const size_t ntrain = datafile("ntraindata", 70); 
+	const size_t ntest = datafile("ntestdata", 30);	
+	const size_t xspacing = datafile("xspacing",0); 
+	const double omega = datafile("omega",5.); 
+	const double phi = datafile("phi",0.); 
+	#ifndef NDEBUG	
+		cout<<ntrain<<endl;
+		cout<<ntest<<endl;
+		cout<<xspacing<<endl;
+		cout<<omega<<endl;
+		cout<<phi<<endl;
+	#endif
 	
 	string filename{"./../../data/TrainingSet"+to_string(ntrain)};
 	VectorXd X;
@@ -71,13 +81,18 @@ int main(int argc, char** argv){
 	filename += to_string(omega);
 	filename += to_string(phi);
 	write_set(filename+".dat", X, omega, phi);
+	#ifndef NDEBUG
+			cout<<"Writing "<<filename<<".dat"<<endl;
+	#endif
 	
 	filename = "./../../data/TestSet"+to_string(ntest);
 	init_spacing(X, ntest, xspacing, filename);
 	filename += to_string(omega);
 	filename += to_string(phi);
 	write_set(filename+".dat", X, omega, phi);
-	
+	#ifndef NDEBUG
+		cout<<"Writing "<<filename<<".dat"<<endl;
+	#endif
 	cout<<"Done"<<endl;
 	return 0;
 }
