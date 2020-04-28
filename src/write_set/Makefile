@@ -2,6 +2,8 @@ CXXFLAGS += -std=c++14 -O3
 CPPFLAGS += -I$$mkEigenInc -I./../../include/
 OUTPUT_OPTION = -o $@
 EXE = write_set.out
+GENERATED_DATA = ./../../data/Train*.dat
+GENERATED_DATA += ./../../data/Test*.dat
 
 .PHONY: all build distclean run
 
@@ -16,6 +18,6 @@ $(EXE): write_set.cpp
 
 distclean:
 	$(RM) $(EXE)
-
+	$(RM) $(GENERATED_DATA)
 run:
 	./$(EXE)
