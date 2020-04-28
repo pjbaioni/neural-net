@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <Eigen/Dense>
+#include <cassert>
 
 namespace Optimizers{
 
@@ -103,11 +104,12 @@ private:
 	T ut;
 	
 	T cwiseMax(const T& a, const T& b){
+		#ifndef NDEBUG
+			bool AdaMaxMatricesDimensionsMatch = (a.rows()==b.rows() && a.cols()==b.cols());
+		#endif
+		assert(AdaMaxMatricesDimensionsMatch);
+
 		T ret(a.rows(),a.cols());
-		if(a.rows()!=b.rows() || a.cols()!=b.cols()){
-			std::cerr<<"In AdaMax dimensions must match!\n";
-			return ret;
-		}
 		for(size_t i=0; i<a.rows(); ++i)
 			for(size_t j=0; j<a.cols();++j)
 				ret(i,j)=std::max(a(i,j),b(i,j));
