@@ -68,10 +68,37 @@ int main(int argc, char** argv){
 	bool verbose = commandline.search(2,"-v","--verbose");
 	
 	GetPot datafile(param_filename.c_str());
+	
 	size_t ntraindata = datafile("ntraindata", 70);
 	string train_filename{"./../data/TrainingSet"+to_string(ntraindata)};
 	size_t ntestdata = datafile("ntestdata", 30);
 	string test_filename{"./../data/TestSet"+to_string(ntestdata)};
+	string prevision_filename{"./../data/yhat"+to_string(ntestdata)};
+	
+	const size_t xspacing = datafile("xspacing",0);
+	switch(xspacing){
+		default:
+			train_filename += "Linspaced";
+			test_filename += "Linspaced";
+			prevision_filename += "Linspaced";
+			break;
+		case 1:
+			train_filename += "Uniform";
+			test_filename += "Uniform";
+			prevision_filename += "Uniform";
+			break;
+		case 2:
+			train_filename += "Normal";
+			test_filename += "Normal";
+			prevision_filename += "Normal";
+			break;
+	}
+	const double omega = datafile("omega",5.);
+	const double phi = datafile("phi",0.);
+	train_filename += to_string(omega); train_filename += to_string(phi);
+	test_filename += to_string(omega); test_filename += to_string(phi);
+	prevision_filename += to_string(omega); prevision_filename += to_string(phi);
+	
 	size_t nlayers = datafile("nlayers", 9);
 	string architecture_filename {"./../data/architecture"+to_string(nlayers)};
 	double alpha = datafile("alpha",1e-2);
@@ -80,7 +107,6 @@ int main(int argc, char** argv){
 	size_t W_opt = datafile("W_opt",4);
 	size_t b_opt = datafile("b_opt",3);
 	size_t nref = datafile("nref",3);
-	string prevision_filename{"./../data/yhat"+to_string(ntestdata)};
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
