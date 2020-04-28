@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -102,7 +103,7 @@ int main(int argc, char** argv){
 	size_t nlayers = datafile("nlayers", 9);
 	string architecture_filename {"./../data/architecture"+to_string(nlayers)};
 	double alpha = datafile("alpha",1e-2);
-	size_t niter = datafile("niter",500000);
+	size_t niter = datafile("niter",250000);
 	double tol = datafile("tol",1e-4);
 	size_t W_opt = datafile("W_opt",4);
 	size_t b_opt = datafile("b_opt",3);
@@ -116,7 +117,7 @@ int main(int argc, char** argv){
 	//Load the net architecture:
 	VectorXs architecture(nlayers);
 	read=read_set(architecture_filename+".dat",architecture);
-	if(!read) return -1;
+	assert(read);
 	
 	//Construct the net:
 	NeuralNetwork nn(architecture);
@@ -127,7 +128,7 @@ int main(int argc, char** argv){
 	//Load the test data:
 	MatrixXd TestData(ntestdata,2);
 	read=read_set(test_filename+".dat",TestData);
-	if(!read) return -1;
+	assert(read);
 	
 	//Test the net:
 	VectorXd yhat;
