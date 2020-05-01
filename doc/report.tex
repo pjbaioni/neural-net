@@ -1344,7 +1344,7 @@ It has to be noticed that in this case the datasets won't be sorted in ascending
 	\caption{Test4}
 \end{figure}
 \noindent The result is still acceptable, but it starts getting worse, since the test set error is about at 5\%. \\
-When this happens it's very important to check the change in the training set too: one could be tented to simply train the net longer, or more or less equivalently to train a bigger network, but in this case it might be ``dangerous". Indeed, going from example 3 to example 4, the train set error has doubled, and this might be reasonable since the data is now random, but the test error has increased tenfold, starting to show clues of over-fitting. In such cases it's better to generate larger train set instead; a counter example is provided in the following paragraph.
+When this happens it's very important to check the change in the training set too: one could be tented to simply train the net longer, or more or less equivalently to train a bigger network, but in this case it might be ``dangerous". Indeed, going from example 3 to example 4, the train set error has doubled, and this might be reasonable since the data is now random, but the test error has increased tenfold, starting to show clues of over-fitting. In such cases it's better to generate larger train set instead of performing a longer and/or stronger training on the same set; a counter example is provided in the following paragraph.
 \subsection{Test 5: over-fitting}
 This test serves as counterexample to show what can happen if a too-strong network, relatively to the faced problem, is used. Same conclusion applies to a normal-size network trained too much.\\
 It's worth nothing that this test, differently from the above ones, might take a bit longer to execute, about 1 minute on the tested machine, exactly because essentially it is doing too much training. Typing {\ttfamily ctrl+C} in any moment would stop execution, resulting in a {\ttfamily make: *** [Makefile:44: test5] Interrupt}.\\
@@ -1366,7 +1366,7 @@ The expected result is:\\
 	\caption{Test5}
 \end{figure}
 \noindent So, although the train set error has decreased 100 times, the test set error has become 3 times greater: the employed 15 layer network has specialized too much on the train set and struggles to generalize to the unseen test set.\\
-Unfortunately this situation is very common in DNN programming. Some general methods to face it are provided in chapter \ref{chapter1}, while some practical advices related to the present code are given in the next \ref{section4.3} section. 
+Unfortunately this situation is very common in DNN programming. Some general methods to face it have been illustrated in chapter \ref{chapter1}, while some practical advices related to the present code are given in the next \ref{section4.3} section. 
 \section{Running the program}\label{section4.3}
 The easiest way to perform general runs of the program is to use the {\ttfamily make run} command in the root directory, or the final-output-equivalent {\ttfamily make verbose\_run}, and to modify the provided ``Parameters.pot" file as wanted. For example, performing a verbose run with the current setting results in:\\
 {\\\ttfamily neural-net \$ make verbose\_run\\
@@ -1395,48 +1395,22 @@ The easiest way to perform general runs of the program is to use the {\ttfamily 
 	\includegraphics[width=\textwidth]{img/VerboseRun} 
 	\caption{verbose run}
 \end{figure}
-\noindent commenti: runtime command line options, non rewriting same datasets (separate use of main and write\_set). Poi refinements, automatic alpha decay, niter infatti è minore di 75k. Passare quindi a spiegare come tunare.\\
-\section*{Old section}
-It's also possible to pass options to the main by make, redefining the variable {\ttfamily OPTIONS} runtime, e.g.:\\
-{\\ \ttfamily 
-src \$ make run OPTIONS=-p="parameters.pot" OPTIONS+="--verbose"\\
-./main.out -p=parameters.pot --verbose\\
-t=100 cost=2.14956 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
-t=200 cost=1.43787 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
-t=300 cost=0.996626 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
-...\\
-t=24900 cost=0.000127942 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
-t=25000 cost=0.000127854 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
-Total iterations = 70300\\
-Cost functional on the training set = 0.000127854\\
-Relative L2 error on test set = 0.00665947\\
-Output written on ./../data/yhat300.dat\\
-\\}
-Some parameters can be changed editing the ``parameters.pot" file (or another one, and passing it's name to main):
-\begin{lstlisting}[frame=single,showstringspaces=false]
-###########################################################
-######### Runtime data for Neural Network - main ##########
-###########################################################
-\end{lstlisting}
-It's worth noting that increasing the net size not necessarily results in a better performance. For example, if it is used as architecture {\ttfamily \{1, 14, 12, 11, 15, 11, 14, 13, 15, 12, 1\}}, that corresponds to a neural net composed by one reading and ten working layers, the hidden ones with a random number of nodes between 11 and 15, the output on the same dataset is:\\
-{\\ \ttfamily 
-Total iterations = 75000\\
-Cost functional on the training set = 6.82184e-08\\
-Relative L2 error on test set = 0.0543924\\
-Output written on ./../data/yhat300.dat\\
-\\}
-meaning that the net is starting to overfit the training data, and thus to have difficulties to generalize to the unseen test data; on the contrary, if we take a more complex function, e.g. one with more oscillations, a deeper and bigger network will be needed to obtain good results.\\
-In very extreme underfitting and overfitting case, even NaNs and Infs can be appear, so in general a good procedure is to start with a smaller network, since in this case the result is produced faster, and then to add layers and nodes until the results starts to get worse.\\
-\newline\noindent As previously mentioned, it might happen that better results are achieved with an hand made piecewise constant learning rate decay. To do that it's enough to:
+\noindent It's frequent that one wants to run again the program on the same datasets, for example after having changed some parameters of the network or of the learning algorithm. In this case that's no need to call write\_set.out too, it's better to use the commands provided in the Makefile placed in the src folder. Even this implements a run command, but it also has an {\ttfamily OPTIONS} variable, that can be overwritten runtime, so that one can do e.g.:\\
+{\ttfamily src \$ make run OPTIONS=--verbose"}\footnote{Mind that if one wants to use the sintax {\ttfamily -p "ParamFileName.pot"} with this command he has to do {\ttfamily \$ make run OPTIONS=-p OPTIONS+="ParamFileName.pot"}, because the two are separated by a space.}\\
+Similar commands are available for write\_set too; of course it's always possible to call the executable in the standard way.
+\subsection{Tuning the network}
+When tuning the net different roads can be taken, however it's possible to give some advice. First of all when facing a new problem, or just after having done significant changes in the settings, it's always better to run in verbose mode, so to know how the net is behaving. The verbose option is tacitly assumed in all the following.\\
+For what concerns the size of the net, a good idea might be to start with a relatively shallow and small net, and to increase it gradually until the results stop getting better, while keeping fixed other parameters to standard values.\\
+Moreover, as previously mentioned too, it's possible that better results are achieved with an hand made piecewise constant learning rate decay. To obtain it the easiest way is to:
 \begin{enumerate}
-	\item\label{item:1} change the {\ttfamily train(...)} line in main.cpp so that it doesn't take {\ttfamily tol, nref} and {\ttfamily verbose}, and fix a low {\ttfamily alpha}, say $0.01$, and a large {\ttfamily niter}, say 25000;
-	\item execute the code, and notice at what iteration the cost starts to become constant or oscillating;
-	\item change the {\ttfamily niter} to that number;
-	\item add another training line with a lower {\ttfamily alpha}, for example $0.001$, and a large number of iterations, as at point \ref{item:1};
-	\item repeat until you get a good result.
+	\item\label{item:1} fix a reasonably large learning rate, like 0.1;
+	\item fix a really high number of iterations;
+	\item put the tolerance to 0 and the number of refinements to 1;
+	\item\label{item:4} execute the code, notice at what iteration the cost begins oscillating or being constant and interrupt the execution;
+	\item add a training line to main.cpp before the one already provided, passing directly as arguments the parameters used above and the just found number of iterations;
+	\item choose a smaller learning rate, rebuild the main program and repeat from point \ref{item:4} until a good result is reached.
 \end{enumerate}
-Of course, instead of doing as at point \ref{item:1}, parameters can be changed also in parameters.pot; for example point \ref{item:1} it's equivalent to put {\ttfamily nref}=1, {\ttfamily tol}=$-1.0$, {\ttfamily alpha}=0.01, {\ttfamily niter}=25000 and to run the code with the ``{\ttfamily -v}" (or ``{\ttfamily --verbose}") option.\\
-As last remark, it's worth underlining that changing the architecture will invalidate the optimality of the {\ttfamily alpha} and {\ttfamily niter} couples of hyper-parameters found following the above procedure.
+As last remark, it's worth noting that changing the architecture will invalidate the optimality of the {\ttfamily alpha} and {\ttfamily niter} couples of hyper-parameters found following the above procedure, so the tuning of the decay it's better done after having identified a reasonably good architecture.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
