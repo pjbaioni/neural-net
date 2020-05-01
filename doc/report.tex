@@ -1130,86 +1130,67 @@ In the following it is assumed that the user is in the directory neural-net, tha
 The last versions of the code have been tested only with modules, which make uses of gcc 7.1, eigen 3.3.3 and boost 1.63.0, but there should be no problems if a local standard installation of the required libraries is used. In this case the make options containing environmental variables that start with {\ttfamily mk}, which are present in the two children Makefiles, have to be corrected in such a way that they take the correct path, as explained in the README.md file.
 \newpage
 \section{Building}
-The main program is built through \cite{make}; in particular root directory the following Makefile is placed:
-\begin{lstlisting}[frame=single, showstringspaces=false]
-SUBDIRS = ./src/write_set ./src
-
-.PHONY: all build clean distclean help run test1 test2 test3 test4 test5 verbose_run
-.DEFAULT_GOAL = build
-all: build
-build:
-	for dir in $(SUBDIRS) ; do \
-  $(MAKE) build -C $$dir ; \
-  done
-clean:
-	$(MAKE) clean -C ./src
-distclean:
-	for dir in $(SUBDIRS) ; do \
-  $(MAKE) distclean -C $$dir ; \
-  done
-help:
-	@echo "Type:" 
-	@echo " - make, make all or make build to build"
-	@echo " - make clean to remove objects"
-	@echo " - make distclean to clean and to remove executables and generated datafiles"
-	@echo " - make run to run the main program with default parameters and options"
-	@echo " - make test<number> to execute the number-th test case"
-	@echo " - make verbose_run to do as make run but in verbose mode"
-	@echo "See doc/report.pdf for more informations"
-run:
-	for dir in $(SUBDIRS) ; do \
-  $(MAKE) run -C $$dir ; \
-  done
-test1:
-	cd ./src/write_set && ./write_set.out -p "./../../data/Test1.pot"
-	cd ./src && ./main.out -p "./../data/Test1.pot"
-test2:
-	cd ./src/write_set && ./write_set.out -p "./../../data/Test2.pot"
-	cd ./src && ./main.out -p "./../data/Test2.pot"
-test3:
-	cd ./src/write_set && ./write_set.out -p "./../../data/Test3.pot"
-	cd ./src && ./main.out -p "./../data/Test3.pot"
-test4:
-	cd ./src/write_set && ./write_set.out -p "./../../data/Test4.pot"
-	cd ./src && ./main.out -p "./../data/Test4.pot"
-test5:
-	cd ./src/write_set && ./write_set.out -p "./../../data/Test5.pot"
-	cd ./src && ./main.out -p "./../data/Test5.pot"
-verbose_run:
-	$(MAKE) run -C ./src/write_set
-	cd ./src && ./main.out --verbose
-\end{lstlisting}
-which, beside defining some useful variables and phony calls, compiles the objects relying on implicit rules, and then links them explicitly.\\
-To build the program it's thus sufficient to run the makefile while being in the src folder:\\
+The program can be automatically built through \cite{make}: it's enough to type {\ttfamily make}, {\ttfamily make all} or {\ttfamily make build} while being in the root directory. For example typing {\ttfamily make} will produce the following output:\\
 {\\ \ttfamily 
-	neural-net\$ cd src\\
-	src\$ make\\
+	neural-net \$ make \\
+	for dir in ./src/write\_set ./src ; do \textbackslash\{\}\\
+	  make build -C \$dir ; \textbackslash\{\}\\
+	  done\\
+	make[1]: Entering directory '/home/pjb/Scrivania/PacsGithub/\\CURRENT/neural-net/src/write\_set'\\
+	g++ -std=c++14 -O3 -DNDEBUG -I\$mkEigenInc -I./../../include/\\ write\_set.cpp -o write\_set.out\\
+	make[1]: Leaving directory '/home/pjb/Scrivania/PacsGithub/\\CURRENT/neural-net/src/write\_set'\\
+	make[1]: Entering directory '/home/pjb/Scrivania/PacsGithub/\\CURRENT/neural-net/src'\\
+	g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o NeuralNetwork.o NeuralNetwork.cpp\\
+	g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o main.o main.cpp\\
+	g++ -std=c++14 -Ofast -L\$mkBoostLib -lboost\_filesystem -lboost\_system -lboost\_iostreams NeuralNetwork.o main.o -o main.out\\
+	make[1]: Leaving directory '/home/pjb/Scrivania/PacsGithub/\\CURRENT/neural-net/src'\\
 	\\}
-Typing {\ttfamily make all} or {\ttfamily make build} will produce the same result. The expected output is:\\
+Indeed, the base Makefile placed in the neural-net folder recursively calls the sub-directories Makefiles. Of course the program can be built even without make: it's enough to copy and paste the above lines starting with {\ttfamily g++} in the terminal emulator.\\
+The father Makefile foresees different commands too, which can be inspected typing {\ttfamily make help}:\\
 {\\ \ttfamily 
- src\$ make \\
-g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o NeuralNetwork.o NeuralNetwork.cpp\\
-g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o main.o main.cpp\\
-g++ -std=c++14 -Ofast -L\$mkBoostLib -lboost\_filesystem\\ -lboost\_system -lboost\_iostreams NeuralNetwork.o main.o -o main.out\\
+	neural-net \$ make help\\
+	Type:\\
+	- make, make all or make build to build\\
+	- make clean to remove object files\\
+	- make distclean to clean and to remove executables and generated datafiles\\
+	- make run to run the main program with default parameters and\\
+	options, as specified in data/Parameters.pot\\
+	- make test<number> to execute the number-th test case\\
+	- make verbose\_run to do as make run but in verbose mode\\
+	See doc/report.pdf for more informations\\
 	\\}
-Of course the program can be built even without Make; it's enough to copy and paste the three above instruction to the terminal.\\
-\newline\noindent To be run, the program requires some data, examples of which are already provided in the data folder. Input datafiles can be edited in any way, but, for what concerns the training and test datasets, the easiest way is to use the provided {\ttfamily write\_set.cpp} utility.\\
-To do build it, while being in the src folder, it's enough to type:\\
-{\\ \ttfamily 
-	src\$ cd src/write\_set\\
-	write\_set\$ g++ -std=c++14 -I\$mkEigenInc -I./../../include/\\ write\_set.cpp\\
-\\}
-Mind that, since it uses GetPot, if the only changes concern the numerosity of the datasets, after having built it once it's enough to change the ``parameters.pot" file in the data folder. As showed in section \ref{section3.4}: \\
-{\\ \ttfamily 
-	write\_set\$ ./a.out --help\\
-\\}
-gives some info more about that.\\
-\newline\noindent For what concerns the modifications when modules are not used, for write\_set it's enough to change the line as:\\
-{\\ \ttfamily 
-	write\_set\$ g++ -std=c++14 -I/path/to/eigen/directory/\\ -I./../../include/ write\_set.cpp\\
-\\}
-Similar changes, for both the {\ttfamily -I} and the {\ttfamily -L} directives, are required in the Makefile for the main program.
-\newpage
+Most of them will be used in the next sections.\\
+Mind that the children Makefiles have some more specific options that might be useful when running the program, and that further personalization can be achieved by direct running the executables, as shown typing e.g. {\ttfamily main.out --help} while being in the {\ttfamily src} directory.
+%To build the program it's thus sufficient to run the makefile while being in the src folder:\\
+%{\\ \ttfamily 
+%	neural-net\$ cd src\\
+%	src\$ make\\
+%	\\}
+%Typing {\ttfamily make all} or {\ttfamily make build} will produce the same result. The expected output is:\\
+%{\\ \ttfamily 
+% src\$ make \\
+%g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o NeuralNetwork.o NeuralNetwork.cpp\\
+%g++ -std=c++14 -Ofast -DNDEBUG -I\$mkEigenInc -I\$mkBoostInc\\ -I./../include/  -c -o main.o main.cpp\\
+%g++ -std=c++14 -Ofast -L\$mkBoostLib -lboost\_filesystem\\ -lboost\_system -lboost\_iostreams NeuralNetwork.o main.o -o main.out\\
+%	\\}
+%Of course the program can be built even without Make; it's enough to copy and paste the three above instruction to the terminal.\\
+%\newline\noindent To be run, the program requires some data, examples of which are already provided in the data folder. Input datafiles can be edited in any way, but, for what concerns the training and test datasets, the easiest way is to use the provided {\ttfamily write\_set.cpp} utility.\\
+%To do build it, while being in the src folder, it's enough to type:\\
+%{\\ \ttfamily 
+%	src\$ cd src/write\_set\\
+%	write\_set\$ g++ -std=c++14 -I\$mkEigenInc -I./../../include/\\ write\_set.cpp\\
+%\\}
+%Mind that, since it uses GetPot, if the only changes concern the numerosity of the datasets, after having built it once it's enough to change the ``parameters.pot" file in the data folder. As showed in section \ref{section3.4}: \\
+%{\\ \ttfamily 
+%	write\_set\$ ./a.out --help\\
+%\\}
+%gives some info more about that.\\
+%\newline\noindent For what concerns the modifications when modules are not used, for write\_set it's enough to change the line as:\\
+%{\\ \ttfamily 
+%	write\_set\$ g++ -std=c++14 -I/path/to/eigen/directory/\\ -I./../../include/ write\_set.cpp\\
+%\\}
+%Similar changes, for both the {\ttfamily -I} and the {\ttfamily -L} directives, are required in the Makefile for the main program.
+%\newpage
 \section{Reconstruction of a wave packet}
 As first example of execution, the program is run using the provided datasets ``TrainingSet70.dat" and ``TestSet300.dat", using the architecture provided in ``architecture.dat".\\
 Having built the main program as in the previous section, while being in the src folder we tipe:\\
