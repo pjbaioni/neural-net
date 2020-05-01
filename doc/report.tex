@@ -1367,8 +1367,35 @@ The expected result is:\\
 \end{figure}
 \noindent So, although the train set error has decreased 100 times, the test set error has become 3 times greater: the employed 15 layer network has specialized too much on the train set and struggles to generalize to the unseen test set.\\
 Unfortunately this situation is very common in DNN programming. Some general methods to face it are provided in chapter \ref{chapter1}, while some practical advices related to the present code are given in the next \ref{section4.3} section. 
-\section{Main commands}\label{section4.3}
-make run con esempio funzionamento, + esempio più preciso di cambiare i refinements etc (meglio solo runtime changes), comandi generali and local con OPTIONS+=, + ./main.out --help e idem per write\_set
+\section{Running the program}\label{section4.3}
+The easiest way to perform general runs of the program is to use the {\ttfamily make run} command in the root directory, or the final-output-equivalent {\ttfamily make verbose\_run}, and to modify the provided ``Parameters.pot" file as wanted. For example, performing a verbose run with the current setting results in:\\
+{\\\ttfamily neural-net \$ make verbose\_run\\
+	make run -C ./src/write\_set\\
+	make[1]: Entering directory '/home/pjb/neural-net/src/write\_set'
+	./write\_set.out\\
+	Writing ./../../data/TrainingSetParameters.dat\\
+	Writing ./../../data/TestSetParameters.dat\\
+	Done\\
+	make[1]: Leaving directory '/home/pjb/neural-net/src/write\_set'
+	cd ./src \&\& ./main.out --verbose\\
+	t=100 cost=3.20761 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+	t=200 cost=2.34495 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+	t=300 cost=1.53293 W\_opt=AdaMax b\_opt=Adam alpha=0.01\\
+	{[...]}\\
+	t=24800 cost=0.000997826 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
+	t=24900 cost=0.000996447 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
+	t=25000 cost=0.000996266 W\_opt=AdaMax b\_opt=Adam alpha=0.0001\\
+	Total iterations = 60400\\
+	Cost functional on the training set = 0.000996266\\
+	Relative L2 error on test set = 0.0173802\\
+	Output written on data/YhatParameters.dat\\
+}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{img/VerboseRun} 
+	\caption{verbose run}
+\end{figure}
+\noindent commenti: runtime command line options, non rewriting same datasets (separate use of main and write\_set). Poi refinements, automatic alpha decay, niter infatti è minore di 75k. Passare quindi a spiegare come tunare.\\
 \section*{Old section}
 It's also possible to pass options to the main by make, redefining the variable {\ttfamily OPTIONS} runtime, e.g.:\\
 {\\ \ttfamily 
