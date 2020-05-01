@@ -1,5 +1,5 @@
 #####################################################################
-############## Runtime data for Neural Network - main ###############
+################ Runtime data for Neural Network ####################
 #####################################################################
 
 # When tuning the net, it's better to start from alpha and architecture

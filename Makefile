@@ -16,12 +16,13 @@ distclean:
 help:
 	@echo "Type:" 
 	@echo " - make, make all or make build to build"
-	@echo " - make clean to remove objects"
+	@echo " - make clean to remove object files"
 	@echo " - make distclean to clean and to remove executables and generated datafiles"
-	@echo " - make run to run the main program with default parameters and options"
+	@echo " - make run to run the main program with default parameters and options,"
+	@echo "   as specified in data/Parameters.pot"
 	@echo " - make test<number> to execute the number-th test case"
 	@echo " - make verbose_run to do as make run but in verbose mode"
-	@echo "See /doc/report.pdf for more informations"
+	@echo "See doc/report.pdf for more informations"
 run:
 	for dir in $(SUBDIRS) ; do \
   $(MAKE) run -C $$dir ; \
