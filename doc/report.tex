@@ -477,8 +477,8 @@ private:
 	vector<VectorXd> db;
 
 	//Optimizers:
-	vector<shared_ptr<GradientDescent<MatrixXd>>> W_optimizer;
-	vector<shared_ptr<GradientDescent<VectorXd>>> b_optimizer;
+	vector<unique_ptr<GradientDescent<MatrixXd>>> W_optimizer;
+	vector<unique_ptr<GradientDescent<VectorXd>>> b_optimizer;
 
 public:
 
@@ -509,8 +509,8 @@ A similar comment holds for the propagation members (\ref{item:iii}), with two o
 	\item forward members, {\ttfamily L} and {\ttfamily A}, have been chosen to be the most general possible, even if for the problems for which the program has been designed the first one and the last one will be always column vectors, and not true matrices;
 	\item backward members, {\ttfamily B} (which stands for ``backward''), {\ttfamily dW} and {\ttfamily db}, aren't strictly needed, like the previous {\ttfamily nlayers}, but simplify significantly the subsequent code.
 \end{itemize}
-The (\ref{item:iv}) group has been introduced later, indeed simple algorithms like Gradient Descent can be applied directly during the training phase, i.e. can be written directly by hand in the {\ttfamily training()} function. However it turns out that most finer optimizers need to store estimators of the gradients, and this estimators have to be updated at every training iteration, thus the idea of storing them in the neural net.\\
-Since, as it will be seen in the following section, optimizers have been implemented applying inheritance, here we store smart pointers to the base class, instead of the proper optimizer itself, in order to be able to use polymorphism later and to let the user choose the desired optimizer runtime, when calling the training function.\\
+The (\ref{item:iv}) group has been introduced later, indeed simple algorithms like Gradient Descent can be applied directly during the training phase, i.e. can be written directly by hand in the {\ttfamily training()} function. However it turns out that most finer optimizers need to store estimators of the gradients, and this estimators have to be updated at every training iteration, thus the idea of storing pointers to them in the neural net.\\
+Since, as it will be seen in the following section, optimizers have been implemented applying inheritance, here we store smart pointers to the base class, instead of the proper optimizer itself, in order to be able to use polymorphism later and to let the user choose the desired optimizer runtime, when calling the training function. Since this is the only reason for use (smart) pointers, it has been chosen to rely on {\ttfamily std::unique\_ptr}s.\\
 \newpage \noindent
 Having introduced the data members, we consider now the member functions.\\
 The constructor initialize every member, in order of declaration:
@@ -536,7 +536,7 @@ NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
 }
 \end{lstlisting}
 In all methods whenever possible efficiency has been considered: for example here {\ttfamily nlayers} and {\ttfamily nnodes} are initialized in the member initializer list, and {\ttfamily std::vector<T>::reserve()} followed by {\ttfamily std::vector<T>::emplace\_back()} is preferred over {\ttfamily std::vector<T>::push\_back()}.\\
-As already explained {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between zero and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random, as requested by the chapter \ref{chapter1} argumentation, we should use the latter and guarantee effective randomness including ``real entropy'' in the seed, for example in this way:
+As already explained by the chapter \ref{chapter1} argumentation, {\ttfamily W} has to be initialized randomly; for this purpose it has been chosen to use the Eigen {\ttfamily Random()} function, which returns a double uniformly distributed between minus one and one. Of course different choices are possible, for example the ones based on the {\ttfamily <random>} header of the standard library. In particular, to be strictly random\footnote{In the sense of returning different results at every run; the generator remains pseudo-random in any case.}, we should use the latter and include ``real entropy'' in the seed, for example in this way:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 size_t sd = chrono::system_clock::now().time_since_epoch().count();
 default_random_engine gen(sd);
@@ -545,7 +545,7 @@ for(size_t i=0; i<W.rows(); ++i)
 	for(size_t j=0; j<W.cols(); ++j)
 		W(i,j) = random_value(gen);
 \end{lstlisting}
-However, the Eigen default pseudo-random function has shown very good performances, so it has been preferred due to its simplicity.\\
+However, the Eigen default pseudo-random function with constant seed has shown very good performances, so it has been preferred due to its simplicity in the debugging and testing stages.\\
 It's worth noting that only {\ttfamily W}, {\ttfamily b} and their gradients can be fully initialized, since it has been chosen to take the input data (whatever it is, training or test data, chosen optimizer...) only when it is really used. Consequently variables like the number of data, which is one of the dimension of the {\ttfamily A[l], L[l]} matrices, is not known at this moment.\\
 In every case the needed space in the vectors is known from {\ttfamily nlayers}, and thus is pre-allocated; only the strictly needed space is allocated, often only {\ttfamily nlayers-1}, an action that is possible due to the choices made in the following {\ttfamily train()} member function (here decomposed in different frames for clarity):
 \begin{lstlisting}[frame=single, showstringspaces=false]
@@ -571,7 +571,7 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, con
 	A[0]=L[0];	
 \end{lstlisting}
 Since the input datasets have to be read somehow, and since the ``layer structure'' was already ready, the first layer has been reserved for reading only. This is of course a personal choice, motivated basically from the fact that it's easy and works good. A more elaborate one could have been to let the first layer weight the $(x,y)$ couples received during training from the dataset, and thus having e.g. {\ttfamily W[0]} an {\ttfamily ndata x nnodes[0]} matrix, but, being {\ttfamily ndata} quite large, this introduces by sure some overhead, which would be unjustified in this case.\\
-Since in the present version the first layer only reads the input, it don't need weights, biases and gradients at all, and for this reason their vectors have one component less.\\
+Since in the present version the first layer only reads the input, it doesn't need weights, biases and gradients at all, and for this reason their vectors have one component less.\\
 A different discussion must be made with regards to the activated outputs variable {\ttfamily A}, which again has just {\ttfamily nlayers-1} elements, but for another reason, less subjective: since we want our output to be a function, in the sense of mathematical analysis, with no particular requirements, we cannot in general activate the last output, because if we would do so for example with a $tanh(\cdot)$, we would be able to reconstruct only $tanh(\cdot)$s.\\
 The ``Init'' phase of the {\ttfamily train()} function finishes with the initialization of the optimizers, which is made through a switch-case construct:
 \begin{lstlisting}[frame=single]
@@ -580,27 +580,27 @@ string W_opt_name, b_opt_name;
 switch(W_opt){
 	case 0:
 		for(size_t l=0; l<nlayers-1; ++l)
-			W_optimizer.emplace_back(make_shared<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_optimizer.emplace_back(make_unique<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
 		W_opt_name = "GradientDescent";
 		break;
 	case 1:
 		for(size_t l=0; l<nlayers-1; ++l)
-			W_optimizer.emplace_back(make_shared<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_optimizer.emplace_back(make_unique<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
 		W_opt_name = "GDwithMomentum";
 		break;
 	case 2:
 		for(size_t l=0; l<nlayers-1; ++l)
-			W_optimizer.emplace_back(make_shared<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_optimizer.emplace_back(make_unique<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
 		W_opt_name = "RMSprop";
 		break;
 	case 3:
 		for(size_t l=0; l<nlayers-1; ++l)
-			W_optimizer.emplace_back(make_shared<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_optimizer.emplace_back(make_unique<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
 		W_opt_name = "Adam";
 		break;
 	default:
 		for(size_t l=0; l<nlayers-1; ++l)
-			W_optimizer.emplace_back(make_shared<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
+			W_optimizer.emplace_back(make_unique<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
 		W_opt_name = "AdaMax";
 		break;
 }		
@@ -608,27 +608,27 @@ switch(W_opt){
 switch(b_opt){
 	case 0:
 		for(size_t l=0; l<nlayers-1; ++l)
-			b_optimizer.emplace_back(make_shared<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_optimizer.emplace_back(make_unique<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
 		b_opt_name = "GradientDescent";
 		break;
 	case 1:
 		for(size_t l=0; l<nlayers-1; ++l)
-			b_optimizer.emplace_back(make_shared<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_optimizer.emplace_back(make_unique<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
 		b_opt_name = "GDwithMomentum";
 		break;
 	case 2:
 		for(size_t l=0; l<nlayers-1; ++l)
-			b_optimizer.emplace_back(make_shared<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_optimizer.emplace_back(make_unique<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
 		b_opt_name = "RMSprop";
 		break;
 	default:
 		for(size_t l=0; l<nlayers-1; ++l)
-			b_optimizer.emplace_back(make_shared<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_optimizer.emplace_back(make_unique<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
 		b_opt_name = "Adam";
 	break;
 	case 4:
 		for(size_t l=0; l<nlayers-1; ++l)
-			b_optimizer.emplace_back(make_shared<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
+			b_optimizer.emplace_back(make_unique<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
 		b_opt_name = "AdaMax";
 		break;
 }	
@@ -647,7 +647,7 @@ vector<size_t> backup_t(nrefinements);
 for(size_t ref=1; ref<=nrefinements; ++ref){
 	for(size_t t=1; t<=niter; ++t){
 		//do one forward propagation
-		//eventually output the cost
+		//in case output the cost
 		//do one backprop
 	}
 //update refinement parameters for the next training loop:
@@ -674,7 +674,7 @@ L[nlayers-1] = ( A[nlayers-2]*W[nlayers-2] ).rowwise() + b[nlayers-2].transpose(
 cost = .5 * (L[nlayers-1] - Data.col(1)).array().square().matrix().sum();
 \end{lstlisting}
 As evident, the code strongly relies on the Eigen built-in operations and function; in particular at line 7 and 11 of the above code a Python-like \textit{broadcasting} is implemented. Another great advantage of using Eigen is the ease of switching between matrix like operations, like the products in the same lines of code, to element wise operations, which are the ones invoked with a {\ttfamily .array()}. Moreover, when optimization is activated, e.g. with the {\ttfamily g++ -O3} option, conversions from matrices to array, as well as transpositions and so on, are implemented in such a way that they are costless from a computational point of view.\\
-Then a convergence check and, eventually, an output to the standard output is performed:
+Then a convergence check and, in case, an output to the standard output is performed:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 /////////////////////////
 //  Convergence check  //
@@ -734,8 +734,8 @@ Just after that the backward propagation phase begins. In the initial stages of 
 	\end{cases}
 \end{equation*} 
 with \textit{Y[l]} being equal to $L[l]=A[l-1]\times W[l]+b[l]$ for the last layer and to $A[l]=tanh(L[l])$ for the others.\\
-The above code implements exactly this chain rule computations, taking into account that the activation function is a $tanh(\cdot)$, and performs also the subsequent update of the parameters, based on their gradients. At the beginning only gradient descent was implemented, directly into the code; that lines have been kept commented for documentation purposes, since they show what the call to the optimizer roughly speaking does.\footnote{Calling the overloaded call operator isn't very elegant anymore, but it was designed when polymorphism wasn't implemented yet, so one had something like {\ttfamily W\_optimizer[l](W[l],dW[l],alpha,t)}, but then polymorphism required to store pointers in the optimizers vectors. Of course one can always do {\ttfamily W\_optimizer[l]->()(W[l],dW[l],alpha,t)}.}\\
-\noindent The training function ends with the refinement and the final output:
+The above code implements exactly this chain rule computations, taking into account that the activation function is a $tanh(\cdot)$, and performs also the subsequent update of the parameters, based on their gradients. At the beginning only gradient descent was implemented, directly into the code; that lines have been kept commented for documentation purposes, since they show what the call to the optimizer roughly speaking does.%\footnote{Calling the overloaded call operator isn't very elegant anymore, but it was designed when polymorphism wasn't implemented yet, so one had something like {\ttfamily  W\_optimizer[l](W[l],dW[l],alpha,t)}, but then polymorphism required to store pointers in the optimizers vectors. Of course one can always do {\ttfamily W\_optimizer[l]->()(W[l],dW[l],alpha,t)}.}\\
+\newpage\noindent The training function ends with the refinement and the final output:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 	//update refinement parameters for the next training loop:
 	alpha=alpha/10;
@@ -985,7 +985,7 @@ void write_set(string filename, const VectorXd & X, const char & separator = ' '
 }
 \end{lstlisting}
 and are saved in the data folder.\\
-To visualize them is possible to use the \cite{gnuplot} script ``PlotDataset.gnu", located in data/ too, eventually modifying the name of the desired dataset. For example for the standard 70 samples training set its output is:\\
+To visualize them is possible to use the \cite{gnuplot} script ``PlotDataset.gnu", located in data/ too, in case modifying the name of the desired dataset. For example for the standard 70 samples training set its output is:\\
 {\\ \ttfamily \$ gnuplot PlotDataset.gnu\\
 Click any mouse button on selected data point to close}
 \begin{figure}[H]
@@ -1423,7 +1423,7 @@ As last remark, it's worth noting that changing the architecture will invalidate
 \addcontentsline{toc}{chapter}{Conclusions}
 In the \hyperref[chapter1]{first chapter} of this report we have illustrated in detail the mechanism behind deep learning, going also over the surface for what concerns typical problems one encounters when designing a deep neural network, such as hyperparameter tuning and overfitting, proposing solutions like $L_2$ regularization and dropout and giving an idea of the scheme one can follow when tuning the network. Moreover we've showed how gradient descent can be extended to tackle deep learning problems, till arriving to Adam and AdaMax, which have been proposed the first time in 2015 and which are now employed in many different situations.\\
 In chapter \ref{chapter2} we have showed two main techniques which can be used to face PDEs problems by means of deep neural networks, as some interesting and useful theoretical results, following the most recent articles and reporting pros, like the ease of extension to more dimensions, aspects that require some care, like the treatment of BCs, and problems that are still open, in general related to the lack of a theoretical framework, implying among the others uncertainty about theoretical error bounds and appropriate values of hyperparameters.\\
-In chapters \ref{chapter3} and \ref{chapter4} we have focused on explaining how a DNN based efficient and numerical analysis relevant application has been developed from scratch, exposing both the technicalities of the adopted algorithms and the design choices that have been taken, both in the details of the implementation and in the general architecture of the program; some insights into expansions of possible interest have been discussed too. After this different complete benchmark cases have been presented, accompanied by comprehensive instructions on how to build run and eventually tune the program.\\
+In chapters \ref{chapter3} and \ref{chapter4} we have focused on explaining how a DNN based efficient and numerical analysis relevant application has been developed from scratch, exposing both the technicalities of the adopted algorithms and the design choices that have been taken, both in the details of the implementation and in the general architecture of the program; some insights into expansions of possible interest have been discussed too. After this different complete benchmark cases have been presented, accompanied by comprehensive instructions on how to build run and in case tune the program.\\
 Before concluding, we notice that it isn't uncommon to find comparisons between results achievable with DNNs methods and classical ones, for example \cite{Jinchao} prove that in a 1D specific example a ReLU DNN can recover a better result, in terms of convergence accuracy, than adaptive finite element method, while \cite{Weinan} show that with fewer parameters, their DNN based method gives more accurate solution than the finite difference method . In such comparisons it's worth considering that the time required by a DNN-like approach is very different from the one of standard methods, indeed from one side tuning a DNN program properly requires a large amount of time, because even hyperparameters which have given great results in one field of application are often completely not suitable to the others, so a considerably high number of combinations have to be tried; from the other side, once tuned and trained, the DNN it's always ready to perform different tests, and so to make all the predictions needed, just at the price of one forward propagation, while a standard solver has to work every time from scratch.\\ 
 Considering all these aspect, we can certainly conclude that deep learning is a very promising and interesting field even for numerical analysis, both from the theoretical and from the applications point of view.\\
 Moreover, its completely specific time scales makes it particularly adapt to find its natural space in the standard procedure of computational science and engineering: if we have an engineering machine or a scientific experiment on which we have to able to operate in very short times, for example to perform rapid slight changes to the configuration in response to sudden perturbations so to guarantee the stability of the system, we start proceeding with the mathematical modeling of the physical problem, we analyze it theoretically and then we move to numerical analysis and finally to programming for example a FEM code. At this point we can design a DNN based solver which we train on the solutions we have found with the previous methods. In this way we end up with a software which is able to find in very short times, the time of just one forward propagation, solutions to the model when the data, i.e. the physical situation, has changed a little, providing in such a way a powerful tool for the real-time control of the state of the machine or of the experiment.
