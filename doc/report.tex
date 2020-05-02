@@ -439,8 +439,10 @@ Downloading the repository ``neural-net'' one finds:
 	\item the \textit{data} folder, which contains the input and output data in .dat and .pot (for \cite{getpot}) format, and \cite{gnuplot} scripts in .gnu format to generate datasets graphs;
 	\item the \textit{doc} folder, containing this documentation in .tex and .pdf format, plus the \textit{img} sub-folder where the images included by the TeX file are stored;
 	\item the \textit{include} folder, containing the headers \textit{GetPot.hpp}, an utility used for parsing parameters files and command line options, \textit{gnuplot-iostream .hpp}, an utility used to output a graphical representation of the results in an interactive way, \textit{NeuralNetwork.hpp}, which holds the NeuralNetwork class, and \textit{Optimizers.hpp}, where all the optimizers employable from NeuralNetwork are defined as class templates;
-	\item the \textit{src} folder, which contain the source files \textit{main.cpp}, \textit{NeuralNetwork.cpp}, where the NeuralNetwork class member functions are defined, the \textit{Makefile} which can be used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets is placed;
+	\item the \textit{src} folder, which contain the source files \textit{main.cpp}, \textit{NeuralNetwork.cpp}, where the NeuralNetwork class member functions are defined, the \textit{Makefile} which is used to automatic build the main program, and the \textit{write\_set} sub-folder, where the \textit{write\_set.cpp} file used to generate datasets and its \textit{Makefile} are placed;
 	\item the COPYING file, a plain text file containing copying informations and licenses;
+	\item a \textit{init\_dirnames.sh} bash script, that can be used (e.g. {\ttfamily neural-net \$ . init\_dirnames.sh}) to ease navigation through directories;
+	\item the base \textit{Makefile}, that calls recursively the ones contained in the other directories for automatic building of the program;
 	\item the README.md file, a markdown file containing basic informations;
 	\item the (hidden) \textit{.gitignore} file, that traces the file extensions which are not being pushed to the remote, mainly compilation files, executables and comments file.
 \end{itemize}
