@@ -792,7 +792,7 @@ In the {\ttfamily namespace Optimizers\{...\}}, defined in \textit{Optimizers.hp
 \newpage \noindent As it was done during early stages of the development, it might seem reasonable to imagine a logical structure like the one sketched here instead:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{img/classes2}
+	\includegraphics[width=0.9\textwidth]{img/classes0}
 	\caption{multiple inheritance pattern}
 \end{figure}
 \noindent but in this last case the multiple inheritance parts would have involved deadlock diamonds, requiring virtual inheritance.\\
@@ -944,7 +944,7 @@ Notice that the definition epsilon member could have been avoided if multiple in
 \newpage
 \section{Write\_set and datasets}\label{section3.4}
 The src/write\_set folder contains the source file write\_set.cpp, which is used to generate the training and test datasets.\\
-This is the first source file to rely to GetPot for the input phase:
+This is the first source file to rely to GetPot for the input phase:\footnote{Here and in the following, most of the``{\ttfamily ifndef NDEBUG - endif}" blocks aren't shown.}
 \begin{lstlisting}[frame=single, showstringspaces=false]
 int main(int argc, char** argv){
 	GetPot commandline(argc,argv);
@@ -952,18 +952,17 @@ int main(int argc, char** argv){
 		help()<<endl;
 		return 0;
 	}
-	string param_filename = commandline.follow("./../../data/parameters.pot",2,"-p","--parameters");
+	const string param_filename = commandline.follow("./../../data/Parameters.pot",2,"-p","--parameters");
+	#ifndef NDEBUG
+		cout<<"Reading data from "<<param_filename<<endl;
+	#endif
 	GetPot datafile(param_filename.c_str());
-	const size_t ntrain = datafile("ntraindata", 70);
-	const size_t ntest = datafile("ntestdata", 30);
-	VectorXd X;
-	X.setLinSpaced(ntrain,-1.5,1.5);
-	string file1{"./../../data/TrainingSet"+to_string(ntrain)}, file2{"./../../data/TestSet"+to_string(ntest)};
-	write_set(file1+".dat",X);
-	X.setLinSpaced(ntest,-1.5,1.5);
-	write_set(file2+".dat",X);
-	return 0;
-}
+	const size_t ntrain = datafile("ntraindata", 70); 
+	const size_t ntest = datafile("ntestdata", 30);	
+	const size_t xspacing = datafile("xspacing",0); 
+	const double omega = datafile("omega",5.); 
+	const double phi = datafile("phi",0.);
+	[...] 
 \end{lstlisting}
 The first thing write\_set {\ttfamily main} does is to check the optional parameters passed runtime, if it finds {\ttfamily -h} or {\ttfamily --help} it calls the  help() function, that prints this:\\
 {\\\ttfamily \$ ./a.out -h  \\
@@ -972,20 +971,59 @@ Options:\\
 -h, --help: print this help\\
 -p, --parameters <filename>: reads parameters from <filename>,\\
           default filename = "./../../data/parameters.pot"\\\\}
-and returns; otherwise it reads the number of training and test samples from the parameters file, which can thus be changed without recompiling the program. 
-\newpage\noindent The two datasets are then generated calling the following function, which currently generate a wave-packet-like function:
+and returns; otherwise it reads the parameters it needs from an ad hoc .pot file, in such a way that parameters can be changed without recompiling the program.
+\newpage\noindent Then the core work of this sub-program is performed:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+	VectorXd X;
+	string filename{"./../../data/TrainingSet" + param_filename.substr(13, param_filename.size()-13-4)};
+	init_spacing(X, ntrain, xspacing, filename);
+	cout<<"Writing "<<filename<<".dat"<<endl;
+	write_set(filename+".dat", X, omega, phi);
+\end{lstlisting}
+The file naming is handled in such a way that the train set file will be called "TrainingSetPFILE.dat", where PFILE is the name of the parameter file name; if {\ttfamily NDEBUG} is not defined the effective values of the used parameters are directly printed in the filename instead.\\
+The generation of the datasets is splitted in two stages.\\
+First the function {\ttfamily init\_spacing(...)} fills suitably the X vector:
+\begin{lstlisting}[frame=single, showstringspaces=false]
+void init_spacing(VectorXd & X, const size_t n, const size_t xspacing, string & filename){
+	switch(xspacing){
+		default:
+			X.setLinSpaced(n,-1.5,1.5);
+			#ifndef NDEBUG
+				filename += "Linspaced";
+			#endif
+			break;
+		case 1:
+			X = VectorXd::Random(n);
+			X = X * 1.5;
+			#ifndef NDEBUG
+				filename += "Uniform";
+			#endif
+			break;
+		case 2:
+			default_random_engine gen;
+			normal_distribution<double> dist(0.,.75);
+			auto gaussian = [&dist, &gen] (double) {return dist(gen);};
+			X = VectorXd::NullaryExpr(n, gaussian);
+			#ifndef NDEBUG
+				filename += "Normal";
+			#endif
+			break;
+	}
+}
+\end{lstlisting} 
+Then the corresponding Y values, togheter with their X, are written in a just created datafile through the {\ttfamily write\_set(...)} function:
 \begin{lstlisting}[frame=single, showstringspaces=false]
 constexpr double pi=4.*std::atan(1.);
-void write_set(string filename, const VectorXd & X, const char & separator = ' '){
+void write_set(string filename,const VectorXd& X,const double omega,const double phi,const char& separator=' '){
 	ofstream ofs(filename);
-	auto u = [] (const double & x) {return exp(-x*x*5)*sin(5*pi*x);};	
+	auto u = [&omega, &phi] (const double & x) {return exp(-x*x*5)*sin(omega*pi*x + phi*pi);};	
 	for(size_t i=0; i<X.rows(); ++i)
 		ofs<<X(i)<<separator<<u(X(i))<<"\n";
 	ofs.close();
 }
 \end{lstlisting}
-and are saved in the data folder.\\
-To visualize them is possible to use the \cite{gnuplot} script ``PlotDataset.gnu", located in data/ too, in case modifying the name of the desired dataset. For example for the standard 70 samples training set its output is:\\
+which contains a lambda function that reconstructs a Gaussian function modulating a sinusoidal one, whose parameters are user defined.\\
+To visualize the data is possible to use the \cite{gnuplot} script ``PlotDataset.gnu", which is located in the data directory too, in case modifying the name of the desired dataset. For example for the ``Test3.pot" training set its output is:\\
 {\\ \ttfamily \$ gnuplot PlotDataset.gnu\\
 Click any mouse button on selected data point to close}
 \begin{figure}[H]
