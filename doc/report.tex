@@ -781,22 +781,30 @@ One could ask why don't use the members {\ttfamily A, L} anyway, so to don't eve
 \newline\noindent Before moving to the optimizers classes, we consider some final remarks.\\
 The code can be easily extended to a n-D interpolator with no conceptual effort. The very simplest way to do so would be to equip also the first layer with a {\ttfamily W}\footnote{and a {\ttfamily b}, and so even backprop variables too.}, basically to do a (weighted) average of every input point $\bm x = (x_1,x_2,x_3...x_n)$. Indeed, doing so the second layer would take as input just 1D $x$ points as usual, $x$ being the (weighted) averages of the components. This method includes the already implemented one as a special case with n=1 and {\ttfamily W = Ones(ndata,1)}. Moreover also in this case it would be possible to give different importance even to the single tuples of coordinates too, as it has been proposed before for the 1D case. That would by sure introduce some overhead, so it has to be done only if the results won't be satisfactory enough otherwise. Finally that ``squeezing'' from n-D to 1D could be performed later on, in another layer. This action might have two concurring effects: from one side the computational effort of every training iteration is being increased, but from the other one less iterations might be needed to reach convergence, since the richness of the data is being kept ``alive" longer. \\
 These improvements haven't been introduced yet, since they go over the aims of the present project as they are outlined in the \hyperref[introduction]{introduction}. Notwithstanding this, it is worth noting that, especially in DNN programming, the more the code is enriched and exponentially the more tuning is necessary; in fact, not only the new choices must be tested, but also all their combinations with the previous hyper-parameters; so the above modifications, albeit quite simple conceptually, could require a slightly significant time to be implemented in an effective way.
-
+\newpage
 \section{The Optimizers class templates}\label{section3.3}
-In the {\ttfamily namespace Optimizers\{...\}}, defined in \textit{Optimizers.hpp}, six classes are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates. Moreover, in order to be able to use polymorphism, so to let the user choose the desired optimizer runtime, they are all related by inheritance, following this hierarchy:
+In the {\ttfamily namespace Optimizers\{...\}}, defined in \textit{Optimizers.hpp}, six classes are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates. Moreover, in order to be able to use polymorphism, so to let the user choose the desired optimizer runtime, it has been chosen to related they all through inheritance. For this purpose, different design choices were possible: from one side we could simply define a base abstract class ``GeneralOptimizer" from which every optimizer would inherit, ending up with a simple and logically impeccable hierarchy, but with significant code repetitions too; from the other side we could choose a structure like the following:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{img/classes1}
-	\caption{single inheritance pattern}\label{fig9}
-\end{figure}
-\newpage \noindent As it was done during early stages of the development, it might seem reasonable to imagine a logical structure like the one sketched here instead:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{img/classes0}
+	\includegraphics[width=\textwidth]{img/classes0}
 	\caption{multiple inheritance pattern}
 \end{figure}
-\noindent but in this last case the multiple inheritance parts would have involved deadlock diamonds, requiring virtual inheritance.\\
-Despite the last one being a possible choice, it has been decided to use only public single inheritance, employing only ``is a'' and ``has a'' relationships, so to keep the code as simple as possible, and also to avoid some overhead.\\
+\noindent which by sure minimize the repeated code, but introduces significant complications in the code, such as the comparison of  deadlock diamonds structures and the consequent need of virtual inheritance.\\
+At the end the choice has been to design a hierarchy with this objective in mind, in order of priority:
+\begin{enumerate}
+	\item guarantee polymorphism;
+	\item avoid multiple inheritance;
+	\item minimize code repetition;
+	\item minimize classes number;
+\end{enumerate}
+so in short, to write something which is functional and minimal, in case at the expense of a strict compliance to the standard paradigm. For this reason gradIN GENERAL, preferito approccio da particolare a generale, perché più vicino al percorso naturale di sviluppo--> spiega. Aggiungi anche nota in NeuralNet che rimanda qui, al 3.3., che dice: unique\_ptr a grad\_desc perchè --> vd questo capitolo.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{img/classes1}
+	\caption{single inheritance pattern}\label{fig9}
+\end{figure}
+%\noindent but in this last case the multiple inheritance parts would have involved deadlock diamonds, requiring virtual inheritance.\\
+%Despite the last one being a possible choice, it has been decided to use only public single inheritance, employing only ``is a'' and ``has a'' relationships, so to keep the code as simple as possible, and also to avoid some overhead.\\
 Finally, in order to keep the correct encapsulation even in the single inheritance - Fig. \ref{fig9} design while guaranteeing {\ttfamily Adam<T>} class had the necessary access to the members of its {\ttfamily RMSprop<T>} member {\ttfamily rms}, class {\ttfamily RMSprop<T>} privately declares class {\ttfamily Adam<T>} as friend.\\
 \newline \noindent In the following we go a little deeper in some implementation details, class by class.\\
 The gradient descent class is straightforward, it's here reported for completeness since it's the base class:
@@ -839,7 +847,7 @@ public:
 	}
 };
 \end{lstlisting}
-\newpage \noindent The RMSprop optimizer, besides updating in its own way the objective, it's the first to introduce a member, named epsilon, which is not foreseen in the theory, and that it's here used to prevent division by zero. It's also the first class in the hierarchy to be declared as final, and consequently to use {\ttfamily private} instead of {\ttfamily protected} in its definition: 
+\noindent The RMSprop optimizer, besides updating in its own way the objective, it's the first to introduce a member, named epsilon, which is not foreseen in the theory, and that it's here used to prevent division by zero. It's also the first class in the hierarchy to be declared as final, and consequently to use {\ttfamily private} instead of {\ttfamily protected} in its definition: 
 \begin{lstlisting}[frame=single]
 template<typename T>
 class RMSprop final : public GDwithMomentum<T>{
@@ -872,7 +880,7 @@ public:
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override = 0;
 };
 \end{lstlisting}
-\newpage\noindent The Adam optimizer includes an operation of elevation to the iteration number-th power, which is a non-negative integer. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary if the exponent is an integer, at first the {\ttfamily Adam<T>} class employed a function like this one:
+\noindent The Adam optimizer includes an operation of elevation to the iteration number-th power, which is a non-negative integer. Since {\ttfamily std::pow()} is known to be a ``performance killer", because it solves a non linear problem which is completely unnecessary if the exponent is an integer, at first the {\ttfamily Adam<T>} class employed a function like this one:
 \begin{lstlisting}[frame=single, basicstyle=\fontsize{9}{11}\ttfamily]
 double mypow(const double b, const std::size_t e){
 	double ret{1.};
@@ -912,35 +920,30 @@ class AdaMax final : public KingmaBa<T>{
 private:
 	T ut;
 	T cwiseMax(const T& a, const T& b){
+		#ifndef NDEBUG
+			bool AdaMaxMatricesDimensionsMatch = (a.rows()==b.rows() && a.cols()==b.cols());
+			assert(AdaMaxMatricesDimensionsMatch);
+		#endif
 		T ret(a.rows(),a.cols());
-		if(a.rows()!=b.rows() || a.cols()!=b.cols()){
-			std::cerr<<"In AdaMax dimensions must match!\n";
-			return ret;
-		}
 		for(size_t i=0; i<a.rows(); ++i)
 			for(size_t j=0; j<a.cols();++j)
 				ret(i,j)=std::max(a(i,j),b(i,j));
 		return ret;
 	}
 	double epsilon{1e-8};
-	
 public:
 	AdaMax(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), ut(m,n){}
-
 	void set_epsilon(double e){epsilon=e;}
-	
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
 		//compute the momenta:
 		this->compute_momentum(gt);		  	//GDwithMomentum step
 		ut=cwiseMax(this->beta2*ut,gt.cwiseAbs());//AdaMax step
-	
 		//update:
 		this->update_objective(theta, (( 1. / (1.-std::pow(this->beta,t)) ) * ( this->mt.cwiseProduct( (1./(epsilon+ut.array())).matrix() ) )), alpha);
 	}
-
 };
 \end{lstlisting}
-Notice that the definition epsilon member could have been avoided if multiple inheritance were used.
+The {\ttfamily assert} at line 8 could have been placed equivalently outside the {\ttfamily if} block, since {\ttfamily assert} automatically checks whether {\ttfamily NDEBUG} is defined or not, however it has been included to improve readability. 
 \newpage
 \section{Write\_set and datasets}\label{section3.4}
 The src/write\_set folder contains the source file write\_set.cpp, which is used to generate the training and test datasets.\\
