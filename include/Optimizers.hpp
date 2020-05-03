@@ -106,9 +106,8 @@ private:
 	T cwiseMax(const T& a, const T& b){
 		#ifndef NDEBUG
 			bool AdaMaxMatricesDimensionsMatch = (a.rows()==b.rows() && a.cols()==b.cols());
+			assert(AdaMaxMatricesDimensionsMatch);
 		#endif
-		assert(AdaMaxMatricesDimensionsMatch);
-
 		T ret(a.rows(),a.cols());
 		for(size_t i=0; i<a.rows(); ++i)
 			for(size_t j=0; j<a.cols();++j)
