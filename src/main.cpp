@@ -35,7 +35,7 @@ ostream & write_vector(const string & ofsname, const VectorXd & X){
 	streambuf* stream_buffer_cout = cout.rdbuf();
 	streambuf* stream_buffer_file = out_file.rdbuf();
 	cout.rdbuf(stream_buffer_file);
-	cout<<X;
+	cout<<X<<"\n";
 	out_file.close();
 	cout.rdbuf(stream_buffer_cout);
 	cout<<"Output written on ";
