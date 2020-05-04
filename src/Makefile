@@ -7,7 +7,7 @@ HEADERS=./../include/$(wildcard *.hpp)
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:%.cpp=%.o)
 OPTIONS=#if_empty_minimal_output
-GENERATED_DATA=./../data/yhat*.dat
+GENERATED_DATA=./../data/Yhat*.dat
 
 main.o: $(HEADERS) $(SRCS)
 NeuralNetwork.o: $(HEADERS) $(filter-out main.cpp,$(SRCS))
