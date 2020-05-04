@@ -453,7 +453,7 @@ As seen in chapter \ref{chapter1}, to which we refer for the names of the princi
 The final choice has been to ``vectorize'' the computations as much as possible, grouping together all the operations performed by nodes in each layer by means of matrices.
 Of course this passage, which can be considered computationally mandatory in machine learning typical languages such as Python, hasn't brought efficiency by itself, being C++ a compiled language: the difference lies in the fact that it has allowed to rely on strongly optimized well known linear algebra libraries, which have provided considerable computational time savings. In particular the choice is fallen on the \cite{eigen} template library, for its immediate compatibility with C++ and its ease of use and linking with respect to other classical libraries such as Lapack, while maintaining a very good performance.
 Having reached this point, and having lost a somehow eye-apparent  sight on each specific node operations, it has appeared senseless to keep the original design of the neural network class, and thus it has been decided to simplify the code, by developing just one class which holds vectors of the quantities that used to characterize every layer in the original design. \\
-The choices made have thus led to a structure as the following one:
+The choices made have thus led to a structure as the following one:\footnote{The class holds vectors of pointers to Gradient Descent in order to implement polymorphism, see section \ref{section3.3} for further insights.}
 \begin{lstlisting}[frame=single, name=neuralnet, showstringspaces=false]
 class NeuralNetwork{
 
@@ -783,29 +783,28 @@ The code can be easily extended to a n-D interpolator with no conceptual effort.
 These improvements haven't been introduced yet, since they go over the aims of the present project as they are outlined in the \hyperref[introduction]{introduction}. Notwithstanding this, it is worth noting that, especially in DNN programming, the more the code is enriched and exponentially the more tuning is necessary; in fact, not only the new choices must be tested, but also all their combinations with the previous hyper-parameters; so the above modifications, albeit quite simple conceptually, could require a slightly significant time to be implemented in an effective way.
 \newpage
 \section{The Optimizers class templates}\label{section3.3}
-In the {\ttfamily namespace Optimizers\{...\}}, defined in \textit{Optimizers.hpp}, six classes are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates. Moreover, in order to be able to use polymorphism, so to let the user choose the desired optimizer runtime, it has been chosen to related they all through inheritance. For this purpose, different design choices were possible: from one side we could simply define a base abstract class ``GeneralOptimizer" from which every optimizer would inherit, ending up with a simple and logically impeccable hierarchy, but with significant code repetitions too; from the other side we could choose a structure like the following:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
+In the {\ttfamily namespace Optimizers\{...\}}, defined in \textit{Optimizers.hpp}, six classes are defined. Since they have to work either with {\ttfamily W} and {\ttfamily b}, they are defined as class templates.\\ 
+Moreover, in order to be able to use polymorphism, and so to let the user choose the desired optimizer runtime, it has been chosen to relate them all through inheritance. For this purpose, different design choices were possible: from one side we could simply define a base abstract class ``GeneralOptimizer" from which every optimizer would inherit, ending up with a simple and logically impeccable hierarchy (every optimizer \textit{is a specialization of} the general optimizer), but with significant code repetitions too; from the opposite one we could choose a structure like the following:\footnote{``class name = 0'' used as shorthand for ``abstract class''}
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{img/classes0}
 	\caption{multiple inheritance pattern}
 \end{figure}
-\noindent which by sure minimize the repeated code, but introduces significant complications in the code, such as the comparison of  deadlock diamonds structures and the consequent need of virtual inheritance.\\
-At the end the choice has been to design a hierarchy with this objective in mind, in order of priority:
+\noindent which by sure minimizes repetitions, but introduces significant complications in the code, such as the comparison of  deadlock diamonds structures and the consequent need of virtual inheritance.\\
+In order to take the decision it has been given a different priority to the objectives and constraints:
 \begin{enumerate}
 	\item guarantee polymorphism;
 	\item avoid multiple inheritance;
 	\item minimize code repetition;
 	\item minimize classes number;
 \end{enumerate}
-so in short, to write something which is functional and minimal, in case at the expense of a strict compliance to the standard paradigm. For this reason gradIN GENERAL, preferito approccio da particolare a generale, perché più vicino al percorso naturale di sviluppo--> spiega. Aggiungi anche nota in NeuralNet che rimanda qui, al 3.3., che dice: unique\_ptr a grad\_desc perchè --> vd questo capitolo.
+So in short, it has been decided to write something which is functional and minimal, in case at the expense of a strict compliance to the standard paradigm. In fact, it has been preferred a bottom-up approach, starting from the direct implementation of a gradient descent step into the NeuralNetwork train() function, then moving to a separate class callable object, and then ``adding pieces" which have been found to be interesting or useful. Moreover, implementing the code, it turned out that gradient descent is actually the most basic class one could imagine for a working optimizer. For these reasons and having this picture in mind, it has been chosen as base class; more generally the children classes in the following Figure \ref{fig10} inherit from their father in the sense that they start from it and then add their own functionalities and particularities:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\textwidth]{img/classes1}
-	\caption{single inheritance pattern}\label{fig9}
+	\caption{single inheritance pattern}\label{fig10}
 \end{figure}
-%\noindent but in this last case the multiple inheritance parts would have involved deadlock diamonds, requiring virtual inheritance.\\
-%Despite the last one being a possible choice, it has been decided to use only public single inheritance, employing only ``is a'' and ``has a'' relationships, so to keep the code as simple as possible, and also to avoid some overhead.\\
-Finally, in order to keep the correct encapsulation even in the single inheritance - Fig. \ref{fig9} design while guaranteeing {\ttfamily Adam<T>} class had the necessary access to the members of its {\ttfamily RMSprop<T>} member {\ttfamily rms}, class {\ttfamily RMSprop<T>} privately declares class {\ttfamily Adam<T>} as friend.\\
+\noindent Finally, it has been chosen to give the class {\ttfamily Adam<T>} an {\ttfamily RMSprop<T>} member, so using an \textit{has a} approach, even if only in this case. This has the cons of treating in a not-symmetric way the two steps, gradient descent with momentum and RMSprop, which together build up the Adam algorithm, but has the pros of avoiding multiple virtual inheritance in a simple and effective way. In order to keep the correct encapsulation in the {\ttfamily RMSprop<T>} class while guaranteeing {\ttfamily Adam<T>} class had the necessary access to the members of its {\ttfamily RMSprop<T>} member {\ttfamily rms}, class {\ttfamily RMSprop<T>} privately declares class {\ttfamily Adam<T>} as friend.\\
 \newline \noindent In the following we go a little deeper in some implementation details, class by class.\\
 The gradient descent class is straightforward, it's here reported for completeness since it's the base class:
 \begin{lstlisting}[frame=single]
