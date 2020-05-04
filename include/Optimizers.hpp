@@ -82,17 +82,18 @@ private:
 public:
 	Adam(const size_t & m, const size_t & n): KingmaBa<T>::KingmaBa(m,n), rms(m,n){}
 	
-		//This follows the Kingma-Ba 2015 article +  memory saving
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
 		//compute the momenta:
 		this->compute_momentum(gt);	//GDwithMomentum step
 		rms.set_beta(this->beta2);
 		rms.compute_momentum(gt.cwiseProduct(gt));//RMSprop step
+	//Strictly following the Kingma-Ba 2015 article
 		//correction step:
 		//T mt_hat = correction_step(this->beta,t,this->mt);
 		//T vt_hat = correction_step(this->beta2,t,rms.get_st());
 		//update:
 		//this->update_objective(theta,( mt_hat.cwiseProduct( ( 1./(rms.get_eps() + sqrt(vt_hat.array())) ).matrix() )), alpha);
+	//Adding some memory saving:
 		this->update_objective(theta,( (correction_step(this->beta,t,this->mt)).cwiseProduct( ( 1./(rms.epsilon + sqrt((correction_step(this->beta2,t,rms.mt)).array())) ).matrix() )), alpha);
 	}	
 
@@ -115,7 +116,6 @@ private:
 		return ret;
 	}
 	
-	//could be avoided with KingmaBa: public GDwithMomentum<T>, public RMSprop<T>
 	double epsilon{1e-8};
 	
 public:
@@ -123,7 +123,6 @@ public:
 	
 	void set_epsilon(double e){epsilon=e;}
 	
-	//Memory already saved here, since AdaMax doesn't require an Adam-like correction step:
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t)override{
 		//compute the momenta:
 		this->compute_momentum(gt);										//GDwithMomentum step

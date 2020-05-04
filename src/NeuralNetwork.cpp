@@ -7,10 +7,10 @@ using namespace Optimizers;
 
 //Constructor:
 NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn){
-	//In same the order of the declaration,
-	//mind that, since ndata is unknown here,
+	//Follows construction in same the order of the declaration,
+	//keeping in mind that, since ndata is unknown here,
 	//L[l],A[l],B[l] have to be defined later, before the training loop
-	//same for optimizer, which are still unknown
+	//and the same holds for optimizers, which are still unknown
 	
 	W.reserve(nlayers-1);
 	b.reserve(nlayers-1);
@@ -20,10 +20,10 @@ NeuralNetwork::NeuralNetwork(const VectorXs & nn): nlayers(nn.rows()),nnodes(nn)
 	}
 	
 	L.reserve(nlayers);	 //--> at last layer B=L-Y, not A-Y (even if A==L), 
-	A.reserve(nlayers-1); // bcs A will be out of range
+	A.reserve(nlayers-1); // because A will be out of range
 	
 	B.reserve(nlayers-1);	
-	dW=W; //1) this require that dW[l] and W[l] refer to the same l, same for b
+	dW=W; //1) this requires that dW[l] and W[l] refer to the same l, same for b
 	db=b; //2) first value isn't important here, since it would be overwritten anyway 
 	
 	W_optimizer.reserve(nlayers-1);
@@ -54,9 +54,6 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, con
 	A[0]=L[0];	
 	
 	//Optimizers:
-	//Preliminar tests has shown that the best compromise between accuracy
-	//and number of iteration is reached when using AdaMax for W and Adam for b,
-	//so these are the default
 	string W_opt_name, b_opt_name;
 	switch(W_opt){
 		case 0:
@@ -130,8 +127,8 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, con
 			// Forward propagation //
 			/////////////////////////
 			for(size_t l=1; l<nlayers-1; ++l){
-				//Summing the column vector b (nnodes(l+1)x1) to each 
-				//column of A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)) :
+				//Summing the column vector b (nnodes(l+1)x1) to each coulmn of
+				//A*W (ndataxnnodes(l)*nnodes(l)xnnodes(l+1)) (broadcasting):
 				L[l] = ( A[l-1]*W[l-1] ).rowwise() + b[l-1].transpose();
 				A[l] = tanh( L[l].array() );
 			}	
@@ -145,9 +142,6 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, con
 			/////////////////////////
 			//  Convergence check  //
 			/////////////////////////
-			//Output the current cost
-			//and check if convergence is reached:
-			
 			if( t%100==0 ){
 				if(verbose) 
 					cout<<"t="<<t<<" cost="<<cost<<" W_opt="<<W_opt_name<<" b_opt="<<b_opt_name<<" alpha="<<alpha<<"\n";
