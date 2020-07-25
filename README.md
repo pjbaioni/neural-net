@@ -66,5 +66,7 @@ see https://www.tug.org/texlive/), and both the .tex file (plus the included
 images) and the compiled .pdf file are provided.
 In appendix it contains a short FreeFem++ code too, see https://freefem.org/, 
 that can be copy-pasted to a .edp file and then run with:
+
  $ FreeFem++ filename.edp
+ 
 The script has been written and tested with FreeFem++ version 3.47
