@@ -115,7 +115,7 @@ int main(int argc, char** argv){
 	
 	//Load the training data:
 	MatrixXd TrainData(ntraindata,2);
-	bool read=read_set(train_filename+".dat",TrainData);
+	[[maybe_unused]] bool read=read_set(train_filename+".dat",TrainData);
 	assert(read);
 
 	//Load the net architecture:

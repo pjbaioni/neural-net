@@ -105,13 +105,11 @@ private:
 	T ut;
 	
 	T cwiseMax(const T& a, const T& b){
-		#ifndef NDEBUG
-			bool AdaMaxMatricesDimensionsMatch = (a.rows()==b.rows() && a.cols()==b.cols());
-			assert(AdaMaxMatricesDimensionsMatch);
-		#endif
+		[[maybe_unused]] bool AdaMaxMatricesDimensionsMatch = (a.rows()==b.rows() && a.cols()==b.cols());
+		assert(AdaMaxMatricesDimensionsMatch);
 		T ret(a.rows(),a.cols());
-		for(size_t i=0; i<a.rows(); ++i)
-			for(size_t j=0; j<a.cols();++j)
+		for(decltype(a.rows()) i=0; i<a.rows(); ++i)
+			for(decltype(a.cols()) j=0; j<a.cols();++j)
 				ret(i,j)=std::max(a(i,j),b(i,j));
 		return ret;
 	}
