@@ -2,7 +2,7 @@ mkEigenInc ?= /usr/include/eigen3
 mkBoostInc ?= /usr/include
 mkBoostLib ?= /usr/lib
 # could be /usr/lib/x86_64-linux-gnu too
-CXXFLAGS += -std=c++20 -Ofast # -O3 -Wall -Wextra
+CXXFLAGS += -std=c++20 -Ofast -Wall -Wextra
 CPPFLAGS += -DNDEBUG -I$(mkEigenInc) -I$(mkBoostInc) -I./../include
 LDFLAGS += -L$(mkBoostLib)
 LDLIBS += -lboost_filesystem -lboost_iostreams
