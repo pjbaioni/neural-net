@@ -31,13 +31,8 @@ bool read_set(const string& setname, T & M, const char & separator=' '){
 }
 
 ostream & write_vector(const string & ofsname, const VectorXd & X){
-	ofstream out_file(ofsname);
-	streambuf* stream_buffer_cout = cout.rdbuf();
-	streambuf* stream_buffer_file = out_file.rdbuf();
-	cout.rdbuf(stream_buffer_file);
-	cout<<X<<"\n";
-	out_file.close();
-	cout.rdbuf(stream_buffer_cout);
+  std::ofstream out_file(ofsname);
+  out_file << X << '\n';
 	cout<<"Output written on ";
 	try{
 		cout<<ofsname.substr(5, 50);
