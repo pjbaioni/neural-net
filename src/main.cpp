@@ -130,10 +130,8 @@ int main(int argc, char** argv){
 	assert(read);
 	
 	//Test the net:
-	VectorXd yhat;
-	double errL2;
-	tie(yhat,errL2)=nn.test(TestData);
-	
+	const auto [yhat, errL2] = nn.test(TestData);
+
 	//Print the results:
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
 	write_vector(prevision_filename+".dat",yhat)<<endl;
