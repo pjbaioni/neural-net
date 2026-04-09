@@ -16,9 +16,9 @@ protected:
 	}
 public:
 	GradientDescent()=default;
-	GradientDescent(const size_t & m, const size_t & n):GradientDescent(){}
+	GradientDescent(const size_t &, const size_t &):GradientDescent(){}
 	virtual ~GradientDescent()=default;
-	virtual void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t){
+	virtual void operator()(T& theta, const T& gt, const double& alpha, const std::size_t &){
 		update_objective(theta,gt,alpha);
 	}
 };
@@ -33,10 +33,10 @@ protected:
 		mt = beta*mt + (1. - beta)*to_be_averaged;
 	}
 public:
-	GDwithMomentum(const size_t & m, const size_t &n):GradientDescent<T>::GradientDescent(m,n),mt(m,n){}
+	GDwithMomentum(const size_t & m, const size_t & n):GradientDescent<T>::GradientDescent(m,n),mt(m,n){}
 	virtual void set_beta(double b){beta=b;}
 
-	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t &) override {
 		compute_momentum(gt);
 		this->update_objective(theta,mt,alpha);
 	}
@@ -55,7 +55,7 @@ public:
 	RMSprop(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
 	virtual void set_epsilon(double e){epsilon=e;}
 	
-	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
+	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t &) override {
 		this->compute_momentum(gt.cwiseProduct(gt));
 		this->update_objective(theta, ( gt.cwiseProduct( (1./(epsilon + sqrt(this->mt.array()))).matrix() )), alpha);
 	}
