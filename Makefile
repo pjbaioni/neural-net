@@ -5,16 +5,18 @@ SUBDIRS = ./src/write_set ./src
 all: build
 build:
 	for dir in $(SUBDIRS) ; do \
-  $(MAKE) build -C $$dir ; \
-  done
+	  $(MAKE) build -C $$dir ; \
+	done
 clean:
-	$(MAKE) clean -C ./src
+	for dir in $(SUBDIRS) ; do \
+	  $(MAKE) clean -C $$dir ; \
+	done
 distclean:
 	for dir in $(SUBDIRS) ; do \
-  $(MAKE) distclean -C $$dir ; \
-  done
+	  $(MAKE) distclean -C $$dir ; \
+	done
 help:
-	@echo "Type:" 
+	@echo "Type:"
 	@echo " - make, make all or make build to build"
 	@echo " - make clean to remove object files"
 	@echo " - make distclean to clean and to remove executables and generated datafiles"
@@ -45,5 +47,3 @@ test5:
 verbose_run:
 	$(MAKE) run -C ./src/write_set
 	cd ./src && ./main.out --verbose
- 
-
