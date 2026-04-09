@@ -38,7 +38,13 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, con
 	///////////////////
 	
 	size_t ndata=Data.rows();
-	
+
+	L.clear();
+  A.clear();
+  B.clear();
+  W_optimizer.clear();
+  b_optimizer.clear();
+
 	//L has nlayers components
 	for(size_t l=0; l<nlayers;++l)
 		L.emplace_back(ndata,nnodes(l));
