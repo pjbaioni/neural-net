@@ -41,7 +41,7 @@ private:
 public:
 	
 	//Constructor:
-	NeuralNetwork(const VectorXs &);
+	explicit NeuralNetwork(const VectorXs &);
 	
 	//Training function:
 	void train(const Eigen::MatrixXd & Data, double alpha, std::size_t niter, const std::size_t W_opt, const std::size_t b_opt, double tolerance=-1., const std::size_t nrefinements=1, const bool verbose=false);
