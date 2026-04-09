@@ -53,7 +53,7 @@ private:
 	friend class Adam<T>;
 public:
 	RMSprop(const size_t & m, const size_t & n):GDwithMomentum<T>::GDwithMomentum(m,n){}
-	virtual void set_eps(double e){epsilon=e;}
+	virtual void set_epsilon(double e){epsilon=e;}
 	
 	void operator()(T& theta, const T& gt, const double& alpha, const std::size_t & t) override {
 		this->compute_momentum(gt.cwiseProduct(gt));
