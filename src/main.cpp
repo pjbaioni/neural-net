@@ -139,8 +139,8 @@ int main(int argc, char** argv){
 	Gnuplot gp;
 	//first way:
 	vector<double> xtest(TestData.rows()),ytest(TestData.rows());
-	VectorXd::Map(&xtest[0], ntestdata) = TestData.col(0);
-	VectorXd::Map(&ytest[0], ntestdata) = TestData.col(1);
+	VectorXd::Map(xtest.data(), ntestdata) = TestData.col(0);
+	VectorXd::Map(ytest.data(), ntestdata) = TestData.col(1);
 	//second way
 	vector<double> prevision(yhat.data(), yhat.data() + yhat.rows()*yhat.cols());
 	//plot:
