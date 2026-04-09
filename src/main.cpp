@@ -10,12 +10,17 @@
 #include <sstream>
 #include <cassert>
 
+#include <concepts>
+
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-template <typename T> //T has to be a matrix which overloads the call operator for indexing
-bool read_set(const string& setname, T & M, const char & separator=' '){
+template <typename T>
+concept MatrixReadableFromFile = requires(T m, std::size_t i, std::size_t j) { m(i, j); };
+
+template <MatrixReadableFromFile T>
+bool read_set(const std::string& setname, T& M, const char separator = ' '){
 	ifstream in(setname);
 	if(!in){
 		cerr<<"Error in opening: "<<setname<<std::endl;
