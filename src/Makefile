@@ -1,6 +1,12 @@
-CXXFLAGS += -std=c++14 -Ofast#-O3 #-ffast-math
-CPPFLAGS += -DNDEBUG -I$$mkEigenInc -I$$mkBoostInc -I./../include/
-LDLIBS += -L$$mkBoostLib -lboost_filesystem -lboost_system -lboost_iostreams
+mkEigenInc ?= /usr/include/eigen3
+mkBoostInc ?= /usr/include
+mkBoostLib ?= /usr/lib
+# could be /usr/lib/x86_64-linux-gnu too
+CXXFLAGS += -std=c++20 -Ofast # -O3 -Wall -Wextra
+CPPFLAGS += -DNDEBUG -I$(mkEigenInc) -I$(mkBoostInc) -I./../include
+LDFLAGS += -L$(mkBoostLib)
+LDLIBS += -lboost_filesystem -lboost_iostreams
+# add -lboost_system only if your Boost installation requires it
 OUTPUT_OPTION=-o $@
 EXE = main.out
 HEADERS=./../include/$(wildcard *.hpp)
