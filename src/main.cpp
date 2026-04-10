@@ -10,16 +10,13 @@
 #include <sstream>
 #include <cassert>
 
-#include <concepts>
-
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-template <typename T>
-concept MatrixReadableFromFile = requires(T m, std::size_t i, std::size_t j) { m(i, j); };
+// concept
 
-template <MatrixReadableFromFile T>
+template <Matrix T>
 bool read_set(const std::string& setname, T& M, const char separator = ' '){
 	ifstream in(setname);
 	if(!in){
@@ -58,8 +55,10 @@ ostream & help(){
 
 int main(int argc, char** argv){
 	
-	//Get data:
-	GetPot commandline(argc,argv);
+	//Get data
+	
+	
+	
 	string param_filename = commandline.follow("./../data/Parameters.pot",2,"-p","--parameters");
 	if(commandline.search(2,"-h","--help")){
 		help()<<endl;
@@ -68,9 +67,11 @@ int main(int argc, char** argv){
 	string train_filename{"./../data/TrainingSet" + param_filename.substr(10, param_filename.size()-10-4)};
 	string test_filename{"./../data/TestSet" + param_filename.substr(10, param_filename.size()-10-4)};
 	string prevision_filename{"./../data/Yhat" + param_filename.substr(10, param_filename.size()-10-4)}; 
-	bool verbose = commandline.search(2,"-v","--verbose"); 
 	
-	GetPot datafile(param_filename.c_str());
+	//check for one CLI option
+
+	// Get data from file
+
 	
 	size_t ntraindata = datafile("ntraindata", 70);
 	size_t ntestdata = datafile("ntestdata", 30);
@@ -141,6 +142,8 @@ int main(int argc, char** argv){
 	cout<<"Relative L2 error on test set = "<<errL2<<endl;
 	write_vector(prevision_filename+".dat",yhat)<<endl;
 	
+	
+	// Live plot
 	Gnuplot gp;
 	//first way:
 	vector<double> xtest(TestData.rows()),ytest(TestData.rows());

@@ -59,63 +59,8 @@ void NeuralNetwork::train(const MatrixXd & Data, double alpha, size_t niter, con
 	L[0]=Data.col(0); 
 	A[0]=L[0];	
 	
-	//Optimizers:
-	string W_opt_name, b_opt_name;
-	switch(W_opt){
-		case 0:
-			for(size_t l=0; l<nlayers-1; ++l)
-				W_optimizer.emplace_back(make_unique<GradientDescent<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-			W_opt_name = "GradientDescent";
-			break;
-		case 1:
-			for(size_t l=0; l<nlayers-1; ++l)
-				W_optimizer.emplace_back(make_unique<GDwithMomentum<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-			W_opt_name = "GDwithMomentum";
-			break;
-		case 2:
-			for(size_t l=0; l<nlayers-1; ++l)
-				W_optimizer.emplace_back(make_unique<RMSprop<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-			W_opt_name = "RMSprop";
-			break;
-		case 3:
-			for(size_t l=0; l<nlayers-1; ++l)
-				W_optimizer.emplace_back(make_unique<Adam<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-			W_opt_name = "Adam";
-			break;
-		default:
-			for(size_t l=0; l<nlayers-1; ++l)
-				W_optimizer.emplace_back(make_unique<AdaMax<MatrixXd>>(dW[l].rows(),dW[l].cols()));
-			W_opt_name = "AdaMax";
-			break;
-	}		
-	
-	switch(b_opt){
-		case 0:
-			for(size_t l=0; l<nlayers-1; ++l)
-				b_optimizer.emplace_back(make_unique<GradientDescent<VectorXd>>(db[l].rows(),db[l].cols()));
-			b_opt_name = "GradientDescent";
-			break;
-		case 1:
-			for(size_t l=0; l<nlayers-1; ++l)
-				b_optimizer.emplace_back(make_unique<GDwithMomentum<VectorXd>>(db[l].rows(),db[l].cols()));
-			b_opt_name = "GDwithMomentum";
-			break;
-		case 2:
-			for(size_t l=0; l<nlayers-1; ++l)
-				b_optimizer.emplace_back(make_unique<RMSprop<VectorXd>>(db[l].rows(),db[l].cols()));
-			b_opt_name = "RMSprop";
-			break;
-		default:
-			for(size_t l=0; l<nlayers-1; ++l)
-				b_optimizer.emplace_back(make_unique<Adam<VectorXd>>(db[l].rows(),db[l].cols()));
-			b_opt_name = "Adam";
-			break;
-		case 4:
-			for(size_t l=0; l<nlayers-1; ++l)
-				b_optimizer.emplace_back(make_unique<AdaMax<VectorXd>>(db[l].rows(),db[l].cols()));
-			b_opt_name = "AdaMax";
-			break;
-	}	
+	//Optimizers (switch)
+
 	
 	///////////////////
 	//Training loops //
